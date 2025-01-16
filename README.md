@@ -1,146 +1,110 @@
-# BNBLockGuard
+# CapsuleGuard
 
-## Description
-BNBLockGuard is a robust and secure smart contract designed for locking ERC20 tokens, including Liquidity Pool (LP) tokens, on the Binance Smart Chain (BSC). It provides a simple and transparent mechanism for locking tokens to build trust with investors and secure liquidity. The contract ensures that tokens are locked for a specified period and can only be withdrawn once the lock expires. Additionally, it allows flexibility to extend the lock duration if needed.
+**CapsuleGuard** is a secure and efficient smart contract designed to lock ERC-20 tokens for a specified period. It enables users to manage token locking with transparency and simplicity, making it ideal for projects requiring time-based token releases.
 
 ---
 
 ## Features
-- **Token Locking**: Securely lock ERC20 tokens, including LP tokens, for a specified duration.
-- **Unlock Mechanism**: Tokens can only be withdrawn by the owner after the lock period ends.
-- **Extend Lock Time**: Extend the lock duration if required.
-- **Transparency**: Emission of events for locking and withdrawing tokens for easy tracking.
+
+- **Token Locking**: Securely lock a specified amount of ERC-20 tokens until a designated unlock time.
+- **Withdrawal**: Withdraw locked tokens after the lock period has expired.
+- **Lock Time Extension**: Extend the unlock time of locked tokens if needed.
+- **Lock Information**: Query locked token details, including the locked amount and unlock time.
+- **Event Logging**: Emit events for key actions, such as token locking and withdrawal, for improved traceability.
 
 ---
 
-## Contract Details
-### State Variables
-- `address public immutable owner`:
-  The address of the contract owner who can lock and withdraw tokens.
-- `IERC20 public token`:
-  The ERC20 token to be locked.
-- `uint256 public unlockTime`:
-  The timestamp when the lock ends.
-- `uint256 public lockedAmount`:
-  The total amount of tokens locked.
+## Table of Contents
 
-### Events
-- `event TokensLocked(address indexed locker, uint256 amount, uint256 unlockTime)`:
-  Emitted when tokens are locked.
-- `event TokensWithdrawn(address indexed owner, uint256 amount)`:
-  Emitted when tokens are withdrawn.
-
-### Modifiers
-- `onlyOwner`:
-  Restricts access to the contract owner.
-- `lockExpired`:
-  Ensures that the lock period has ended before allowing withdrawals.
-
-### Functions
-1. **Constructor**
-   ```solidity
-   constructor(address _tokenAddress, uint256 _unlockTime)
-   ```
-   - Initializes the contract with the token to be locked and the unlock time.
-   - Requirements:
-     - `_unlockTime` must be in the future.
-     - `_tokenAddress` must be a valid ERC20 token address.
-
-2. **lockTokens**
-   ```solidity
-   function lockTokens(uint256 _amount) external onlyOwner
-   ```
-   - Locks the specified amount of tokens in the contract.
-   - Requirements:
-     - `_amount` must be greater than zero.
-     - Tokens must be approved for transfer to the contract.
-
-3. **withdrawTokens**
-   ```solidity
-   function withdrawTokens() external onlyOwner lockExpired
-   ```
-   - Withdraws all locked tokens after the lock period ends.
-
-4. **extendLockTime**
-   ```solidity
-   function extendLockTime(uint256 newUnlockTime) external onlyOwner
-   ```
-   - Extends the unlock time to a future date.
-   - Requirements:
-     - `newUnlockTime` must be greater than the current unlock time.
+- [Deployment](#deployment)
+- [How It Works](#how-it-works)
+- [Functions](#functions)
+- [Security Considerations](#security-considerations)
+- [License](#license)
 
 ---
 
 ## Deployment
-### Prerequisites
-1. Install [MetaMask](https://metamask.io/) and configure it for Binance Smart Chain Testnet/Mainnet.
-2. Install a Solidity development environment, such as [Remix](https://remix.ethereum.org/) or [Hardhat](https://hardhat.org/).
 
-### Steps
-1. **Compile the Contract**:
-   - Use Solidity 0.8.20 or a compatible version.
-   - Ensure OpenZeppelin dependencies are installed if using Hardhat or Truffle.
+To deploy the `CapsuleGuard` contract, follow these steps:
 
-2. **Deploy the Contract**:
-   - Deploy the contract with:
-     - `_tokenAddress`: Address of the ERC20 token to be locked.
-     - `_unlockTime`: Timestamp for the lock expiration (e.g., `block.timestamp + 30 days`).
-
-3. **Verify the Contract**:
-   - Use BscScan or other tools to verify the deployed contract.
+1. Use a development environment like [Remix](https://remix.ethereum.org/) or [Hardhat](https://hardhat.org/).
+2. Compile the contract with Solidity version `^0.8.20`.
+3. Deploy the contract to your desired blockchain network (e.g., Ethereum, BNB Smart Chain).
 
 ---
 
-## How to Use
-### Lock Tokens
-1. Approve the contract to spend the tokens:
-   ```solidity
-   token.approve(address(tokenLock), amount);
-   ```
-2. Call the `lockTokens` function:
-   ```solidity
-   tokenLock.lockTokens(amount);
-   ```
+## How It Works
 
-### Withdraw Tokens
-1. Ensure the unlock time has passed.
-2. Call the `withdrawTokens` function:
-   ```solidity
-   tokenLock.withdrawTokens();
-   ```
-
-### Extend Lock Time
-1. Call the `extendLockTime` function with the new unlock time:
-   ```solidity
-   tokenLock.extendLockTime(newUnlockTime);
-   ```
+1. **Lock Tokens**: Users can lock their tokens by transferring them to the contract along with the desired unlock time.
+2. **Query Lock Details**: Users can query the locked amount and unlock time of their tokens.
+3. **Withdraw Tokens**: Once the unlock time has passed, users can withdraw their locked tokens.
+4. **Extend Lock Time**: Users can extend the unlock time of their tokens if needed.
 
 ---
 
-## Example
-### Deployment Parameters
-- `_tokenAddress`: `0x...` (Token contract address).
-- `_unlockTime`: `block.timestamp + 30 days`.
+## Functions
 
-### Interactions
-- Lock 1000 tokens:
-  ```solidity
-  token.approve(address(tokenLock), 1000 * 10**decimals);
-  tokenLock.lockTokens(1000 * 10**decimals);
-  ```
-- Withdraw tokens after the unlock period:
-  ```solidity
-  tokenLock.withdrawTokens();
-  ```
+### 1. `lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime)`
+
+Locks a specified amount of tokens until a specified unlock time.
+
+- **Parameters**:
+  - `tokenAddress`: Address of the ERC-20 token to lock.
+  - `amount`: Amount of tokens to lock.
+  - `unlockTime`: Unix timestamp when the tokens can be unlocked.
+- **Emits**: `TokensLocked` event.
+
+---
+
+### 2. `withdrawTokens(address tokenAddress)`
+
+Withdraws locked tokens after the lock period has expired.
+
+- **Parameters**:
+  - `tokenAddress`: Address of the ERC-20 token to withdraw.
+- **Emits**: `TokensWithdrawn` event.
+- **Reverts**:
+  - If the lock period has not ended.
+  - If no tokens are locked.
+
+---
+
+### 3. `extendLockTime(address tokenAddress, uint256 newUnlockTime)`
+
+Extends the unlock time for a locked token.
+
+- **Parameters**:
+  - `tokenAddress`: Address of the ERC-20 token to extend the lock for.
+  - `newUnlockTime`: New unlock timestamp (must be greater than the current unlock time).
+
+---
+
+### 4. `getLockDetails(address lockerAddress, address tokenAddress)`
+
+Fetches the details of locked tokens for a specific locker and token.
+
+- **Parameters**:
+  - `lockerAddress`: Address of the token locker.
+  - `tokenAddress`: Address of the ERC-20 token.
+- **Returns**:
+  - `lockedAmount`: Amount of tokens locked.
+  - `unlockTime`: Timestamp when the tokens can be unlocked.
 
 ---
 
 ## Security Considerations
-1. Ensure you trust the token contract (`_tokenAddress`) to prevent malicious interactions.
-2. Use a hardware wallet for deployment to secure the private key.
-3. Test thoroughly on a testnet before deploying to mainnet.
+
+- Ensure the contract is deployed on a trusted network.
+- Tokens are transferred using the `transferFrom` method, requiring the user to approve the contract to spend tokens on their behalf.
+- Extending the unlock time can only be performed by the locker of the tokens.
 
 ---
 
 ## License
-This project is licensed under the MIT License.
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
+CapsuleGuard: Secure. Transparent. Reliable.

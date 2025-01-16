@@ -3,52 +3,89 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract TokenLock {
-    address public immutable owner;
-    IERC20 public token; // The token to be locked
-    uint256 public unlockTime; // Timestamp when the lock ends
-    uint256 public lockedAmount; // Amount of tokens locked
+contract CapsuleGuard {
+    // Mapping from locker -> token address -> lock info
+    struct TokenLockInfo {
+        uint256 lockedAmount;
+        uint256 unlockTime;
+    }
+    mapping(address => mapping(address => TokenLockInfo)) private _tokenLocks;
 
-    event TokensLocked(address indexed locker, uint256 amount, uint256 unlockTime);
-    event TokensWithdrawn(address indexed owner, uint256 amount);
+    event TokensLocked(address indexed token, address indexed locker, uint256 amount, uint256 unlockTime);
+    event TokensWithdrawn(address indexed token, address indexed locker, uint256 amount);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not the owner");
+    modifier lockExpired(address lockerAddress, address tokenAddress) {
+        require(block.timestamp >= _tokenLocks[lockerAddress][tokenAddress].unlockTime, "Lock period not yet ended");
         _;
     }
 
-    modifier lockExpired() {
-        require(block.timestamp >= unlockTime, "Lock period not yet ended");
-        _;
+    /**
+     * @dev Locks a specified amount of tokens until a specified unlock time.
+     * @param tokenAddress The address of the token to lock.
+     * @param amount The amount of tokens to lock.
+     * @param unlockTime The timestamp when the tokens can be unlocked.
+     */
+    function lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime) external {
+        require(tokenAddress != address(0), "Invalid token address");
+        require(amount > 0, "Amount must be greater than zero");
+        require(unlockTime > block.timestamp, "Unlock time must be in the future");
+
+        IERC20 token = IERC20(tokenAddress);
+
+        // Transfer tokens from user to this contract
+        require(token.transferFrom(msg.sender, address(this), amount), "Token transfer failed");
+
+        // Update lock info in a single write operation
+        TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][tokenAddress];
+        lockInfo.lockedAmount += amount;
+        lockInfo.unlockTime = unlockTime;
+
+        emit TokensLocked(tokenAddress, msg.sender, amount, unlockTime);
     }
 
-    constructor(address _tokenAddress, uint256 _unlockTime) {
-        require(_unlockTime > block.timestamp, "Unlock time must be in the future");
-        require(_tokenAddress != address(0), "Invalid token address");
-        owner = msg.sender;
-        token = IERC20(_tokenAddress);
-        unlockTime = _unlockTime;
-    }
-
-    function lockTokens(uint256 _amount) external onlyOwner {
-        require(_amount > 0, "Amount must be greater than zero");
-        require(token.transferFrom(msg.sender, address(this), _amount), "Token transfer failed");
-        lockedAmount += _amount;
-
-        emit TokensLocked(msg.sender, _amount, unlockTime);
-    }
-
-    function withdrawTokens() external onlyOwner lockExpired {
-        uint256 amount = lockedAmount;
+    /**
+     * @dev Withdraws locked tokens after the lock period has expired.
+     * @param tokenAddress The address of the token to withdraw.
+     */
+    function withdrawTokens(address tokenAddress) external lockExpired(msg.sender, tokenAddress) {
+        TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][tokenAddress];
+        uint256 amount = lockInfo.lockedAmount;
         require(amount > 0, "No tokens to withdraw");
-        lockedAmount = 0;
 
-        require(token.transfer(owner, amount), "Token transfer failed");
-        emit TokensWithdrawn(owner, amount);
+        // Reset locked amount
+        lockInfo.lockedAmount = 0;
+
+        IERC20 token = IERC20(tokenAddress);
+        require(token.transfer(msg.sender, amount), "Token transfer failed");
+
+        emit TokensWithdrawn(tokenAddress, msg.sender, amount);
     }
 
-    function extendLockTime(uint256 newUnlockTime) external onlyOwner {
-        require(newUnlockTime > unlockTime, "New unlock time must be in the future");
-        unlockTime = newUnlockTime;
+    /**
+     * @dev Extends the unlock time for a locked token.
+     * @param tokenAddress The address of the token to extend the lock time for.
+     * @param newUnlockTime The new unlock time (must be greater than the current unlock time).
+     */
+    function extendLockTime(address tokenAddress, uint256 newUnlockTime) external {
+        TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][tokenAddress];
+        require(newUnlockTime > lockInfo.unlockTime, "New unlock time must be in the future");
+
+        lockInfo.unlockTime = newUnlockTime;
     }
-} 
+
+    /**
+     * @dev Gets the lock details for a specific locker and token.
+     * @param lockerAddress The address of the locker.
+     * @param tokenAddress The address of the token.
+     * @return lockedAmount The amount of locked tokens.
+     * @return unlockTime The unlock timestamp.
+     */
+    function getLockDetails(address lockerAddress, address tokenAddress)
+        external
+        view
+        returns (uint256 lockedAmount, uint256 unlockTime)
+    {
+        TokenLockInfo memory lockInfo = _tokenLocks[lockerAddress][tokenAddress];
+        return (lockInfo.lockedAmount, lockInfo.unlockTime);
+    }
+}
