@@ -1,0 +1,12 @@
+w3m-button::part(root) button {
+  background-color: rgb(255 255 255 / 5%) !important;
+  color: white;
+  border-radius: 25px;
+  padding: 10px 15px;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+w3m-button::part(root) button:hover {
+  background-color: rgb(255 255 255 / 15%);
+}
