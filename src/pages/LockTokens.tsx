@@ -1,5 +1,6 @@
 import { Eip1193Provider, ethers, parseUnits } from "ethers"; 
 import React, { useState } from 'react';
+import { CONTRACT_ADDRESS } from "../config";
 import {
   Box,
   Typography,
@@ -93,7 +94,7 @@ const LockTokenPage: React.FC = () => {
       const signer = await provider.getSigner();
   
       // Replace with your deployed contract address
-      const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
+      const contractAddress = CONTRACT_ADDRESS || "";
   
       // Replace with your CapsuleGuard contract ABI
       const contractABI = [
@@ -162,7 +163,6 @@ const LockTokenPage: React.FC = () => {
             sx={{ marginBottom: 3 }}
           >
             <Tab label="Lock Token/Liquidity" icon={<LockIcon />} iconPosition="start" />
-            <Tab label="View Locked" icon={<RocketLaunchIcon />} iconPosition="start" />
           </Tabs>
 
           {activeTab === 0 && (
@@ -210,17 +210,6 @@ const LockTokenPage: React.FC = () => {
             </Box>
           )}
 
-          {activeTab === 1 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Your Locked Tokens and Liquidity
-              </Typography>
-              <Typography>
-                {/* Placeholder content - Replace with actual data fetching */}
-                No locked tokens or liquidity found.
-              </Typography>
-            </Box>
-          )}
         </Box>
       </Container>
     </LocalizationProvider>

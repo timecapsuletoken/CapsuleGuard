@@ -1,31 +1,17 @@
 import * as React from 'react';
 import { ethers } from "ethers";
 import { Box, Stack, Avatar, Typography, Chip, Link } from '@mui/material';
-import { createTheme } from '@mui/material/styles';
+import { Theme } from "./styles/theme"; // Adjust the path as necessary
 import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import CGLogo from './assets/images/logos/logo.png';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout, ThemeSwitcher, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
-import { createWeb3Modal, defaultConfig } from 'web3modal-web3js/react';
+import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider  } from 'web3modal-web3js/react';
+import { PROJECT_ID } from "./config";
 import DashboardPage from './pages/index'; // Dashboard content
 import LockTokens from './pages/LockTokens'; // Lock Tokens content
 import LockedTokens from './pages/LockedTokens'; // Lock Tokens content
-
-// Wallet Context
-const WalletContext = React.createContext<{
-  address: string;
-  provider: ethers.BrowserProvider | null;
-  setAddress: (address: string) => void;
-  setProvider: (provider: ethers.BrowserProvider | null) => void;
-}>({
-  address: "",
-  provider: null,
-  setAddress: () => {},
-  setProvider: () => {},
-});
-
-export const useWallet = () => React.useContext(WalletContext);
 
 const NAVIGATION: Navigation = [
   {
@@ -55,78 +41,8 @@ const NAVIGATION: Navigation = [
   },
 ];
 
-const demoTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
-  },
-  colorSchemes: {
-    light: {
-      palette: {
-        background: {
-          default: '#F9F9FE',
-          paper: '#EEEEF9',
-        },
-        primary: {
-          main: '#9e03f2', // Primary color
-          light: '#c773f5',
-          dark: '#5f0191',
-          contrastText: '#ffffff', // Text color for primary elements
-        },
-        secondary: {
-          main: '#595959', // Secondary color
-          light:'rgb(143, 143, 143)',
-          dark: '#333333',
-          contrastText: '#ffffff', // Text color for secondary elements
-        },
-        text: {
-          primary: '#333333', // Main text color
-          secondary: '#555555', // Secondary text color
-        },
-      },
-    },
-    dark: {
-      palette: {
-        background: {
-          default: '#1c1c1c',
-          paper: '#333333',
-        },
-        primary: {
-          main: '#1ec8d8', // Primary color
-          light:'rgb(191, 250, 255)',
-          dark:'rgb(18, 101, 109)',
-          contrastText: '#ffffff', // Text color for primary elements
-        },
-        secondary: {
-          main:'rgb(0, 157, 172)', // Secondary color
-          light: 'rgb(224, 252, 255)',
-          dark: 'rgb(0, 108, 117)',
-          contrastText: '#ffffff', // Text color for secondary elements
-        },
-        text: {
-          primary: '#ffffff', // Main text color
-          secondary: '#bdbdbd', // Secondary text color
-        },
-      },
-    },
-  },
-  typography: {
-    fontFamily: "'Lunasima', 'Arial', sans-serif", // Custom font
-    h1: { fontSize: '2rem', fontWeight: 700 },
-    body1: { fontSize: '1rem', lineHeight: 1.5 },
-  },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1536,
-    },
-  },
-});
-
 // Web3Modal Configuration
-const projectId = 'e3a29696e7dba40c10f0ed56b268a15a';
+const projectId = PROJECT_ID || "";
 const chains = [
   {
     chainId: 1,
@@ -141,6 +57,13 @@ const chains = [
     currency: 'BNB',
     explorerUrl: 'https://bscscan.com',
     rpcUrl: 'https://bsc-dataseed.bnbchain.org/',
+  },
+  {
+    chainId: 97,
+    name: 'BNB Smart Chain Testnet',
+    currency: 'tBNB',
+    explorerUrl: 'https://testnet.bscscan.com',
+    rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545/',
   },
   {
     chainId: 42161,
@@ -163,8 +86,8 @@ const web3Config = defaultConfig({
 });
 
 // Extract the resolved color from the theme
-const colorMain = demoTheme.palette.primary.main;
-const colorDark = demoTheme.palette.primary.dark;
+const colorMain = Theme.palette.primary.main;
+const colorDark = Theme.palette.primary.dark;
 
 createWeb3Modal({
   web3Config,
@@ -201,7 +124,7 @@ function SidebarFooter({ mini }: SidebarFooterProps) {
         variant="caption"
         sx={{ m: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}
       >
-        {mini ? '© MUI' : `© ${new Date().getFullYear()} Made with love by MUI`}
+        {mini ? '© $TCA' : `© ${new Date().getFullYear()} Made with love by $TCA`}
       </Typography>
     </Box>
   );
@@ -238,47 +161,44 @@ interface DemoProps {
   window?: () => Window;
 }
 
-export default function DashboardLayoutSlots(props: DemoProps) {
+const WalletContext = React.createContext<{
+  address: string | undefined;
+  isConnected: boolean;
+  provider: ethers.BrowserProvider | null;
+  chainId: number | undefined;
+}>({
+  address: undefined,
+  isConnected: false,
+  provider: null,
+  chainId: undefined,
+});
+
+export const useWallet = () => React.useContext(WalletContext);
+
+export default function App(props: DemoProps) {
   const { window } = props;
-  const router = useDemoRouter('/dashboard');
+  const router = useDemoRouter("/dashboard");
   const demoWindow = window !== undefined ? window() : undefined;
-  const [address, setAddress] = React.useState("");
+
+  const { address, isConnected, chainId } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
+
+  // Create an ethers.js provider when `walletProvider` is available
   const [provider, setProvider] = React.useState<ethers.BrowserProvider | null>(null);
 
   React.useEffect(() => {
-    async function connectWallet() {
-      try {
-        // Safely access `window.ethereum` with proper typing
-        const ethereum = (window as unknown as { ethereum?: ethers.Eip1193Provider }).ethereum;
-  
-        if (!ethereum) {
-          console.error("No Ethereum provider detected. Please install MetaMask.");
-          return;
-        }
-  
-        // Use ethers.js v6 BrowserProvider
-        const web3Provider = new ethers.BrowserProvider(ethereum);
-        const signer = await web3Provider.getSigner();
-        const userAddress = await signer.getAddress();
-  
-        setProvider(web3Provider);
-        setAddress(userAddress);
-  
-        console.log("Connected address:", userAddress);
-      } catch (error) {
-        console.error("Error connecting to wallet:", error);
-      }
+    if (walletProvider) {
+      const ethersProvider = new ethers.BrowserProvider(walletProvider);
+      setProvider(ethersProvider);
     }
-  
-    connectWallet();
-  }, []);  
+  }, [walletProvider]);
 
   return (
-    <WalletContext.Provider value={{ address, provider, setAddress, setProvider }}>
+    <WalletContext.Provider value={{ address, isConnected, provider, chainId }}>
       <AppProvider
         navigation={NAVIGATION}
         router={router}
-        theme={demoTheme}
+        theme={Theme}
         window={demoWindow}
       >
         <DashboardLayout
@@ -290,7 +210,7 @@ export default function DashboardLayoutSlots(props: DemoProps) {
           disableCollapsibleSidebar
         >
           <Box sx={{ flex: 1, padding: 0 }}>
-          <DemoPageContent pathname={router.pathname} />
+            <DemoPageContent pathname={router.pathname} />
           </Box>
         </DashboardLayout>
       </AppProvider>
