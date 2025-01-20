@@ -1,14 +1,31 @@
 import * as React from 'react';
+import { ethers } from "ethers";
 import { Box, Stack, Avatar, Typography, Chip, Link } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
-import { Dashboard as DashboardIcon, PunchClock as PunchClockIcon } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import CGLogo from './assets/images/logos/logo.png';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout, ThemeSwitcher, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
 import { createWeb3Modal, defaultConfig } from 'web3modal-web3js/react';
 import DashboardPage from './pages/index'; // Dashboard content
-import LockTokens from './pages/LockTokens'; // Orders content
+import LockTokens from './pages/LockTokens'; // Lock Tokens content
+import LockedTokens from './pages/LockedTokens'; // Lock Tokens content
+
+// Wallet Context
+const WalletContext = React.createContext<{
+  address: string;
+  provider: ethers.BrowserProvider | null;
+  setAddress: (address: string) => void;
+  setProvider: (provider: ethers.BrowserProvider | null) => void;
+}>({
+  address: "",
+  provider: null,
+  setAddress: () => {},
+  setProvider: () => {},
+});
+
+export const useWallet = () => React.useContext(WalletContext);
 
 const NAVIGATION: Navigation = [
   {
@@ -24,25 +41,17 @@ const NAVIGATION: Navigation = [
     kind: 'divider',
   },
   {
-    kind: 'header',
-    title: 'Tools',
+    segment: 'locker',
+    title: 'Locker',
+    icon: <LockClockIcon />,
   },
   {
-    segment: '',
-    title: 'Locker',
-    icon: <PunchClockIcon />,
-    children: [
-      {
-        segment: 'localhost:5173/locker',
-        title: 'Lock Tokens',
-        icon: <PunchClockIcon />,
-      },
-      {
-        segment: 'LockedTokens',
-        title: 'Locked Tokens',
-        icon: <PunchClockIcon />,
-      },
-    ],
+    kind: 'divider',
+  },
+  {
+    segment: 'locked',
+    title: 'Locked Tokens',
+    icon: <LockOpenIcon />,
   },
 ];
 
@@ -217,6 +226,7 @@ function CustomAppTitle() {
 function DemoPageContent({ pathname }: { pathname: string }) {
   if (pathname === '/dashboard' || pathname === '/') return <DashboardPage />;
   if (pathname === '/locker') return <LockTokens />;
+  if (pathname === '/locked') return <LockedTokens />;
   return <Typography>404 - Page Not Found</Typography>;
 }
 
@@ -232,26 +242,58 @@ export default function DashboardLayoutSlots(props: DemoProps) {
   const { window } = props;
   const router = useDemoRouter('/dashboard');
   const demoWindow = window !== undefined ? window() : undefined;
+  const [address, setAddress] = React.useState("");
+  const [provider, setProvider] = React.useState<ethers.BrowserProvider | null>(null);
+
+  React.useEffect(() => {
+    async function connectWallet() {
+      try {
+        // Safely access `window.ethereum` with proper typing
+        const ethereum = (window as unknown as { ethereum?: ethers.Eip1193Provider }).ethereum;
+  
+        if (!ethereum) {
+          console.error("No Ethereum provider detected. Please install MetaMask.");
+          return;
+        }
+  
+        // Use ethers.js v6 BrowserProvider
+        const web3Provider = new ethers.BrowserProvider(ethereum);
+        const signer = await web3Provider.getSigner();
+        const userAddress = await signer.getAddress();
+  
+        setProvider(web3Provider);
+        setAddress(userAddress);
+  
+        console.log("Connected address:", userAddress);
+      } catch (error) {
+        console.error("Error connecting to wallet:", error);
+      }
+    }
+  
+    connectWallet();
+  }, []);  
 
   return (
-    <AppProvider
-      navigation={NAVIGATION}
-      router={router}
-      theme={demoTheme}
-      window={demoWindow}
-    >
-      <DashboardLayout
-        slots={{
-          appTitle: CustomAppTitle,
-          toolbarActions: ToolbarActionsSearch,
-          sidebarFooter: SidebarFooter,
-        }}
-        disableCollapsibleSidebar
+    <WalletContext.Provider value={{ address, provider, setAddress, setProvider }}>
+      <AppProvider
+        navigation={NAVIGATION}
+        router={router}
+        theme={demoTheme}
+        window={demoWindow}
       >
-        <Box sx={{ flex: 1, padding: 0 }}>
-         <DemoPageContent pathname={router.pathname} />
-        </Box>
-      </DashboardLayout>
-    </AppProvider>
+        <DashboardLayout
+          slots={{
+            appTitle: CustomAppTitle,
+            toolbarActions: ToolbarActionsSearch,
+            sidebarFooter: SidebarFooter,
+          }}
+          disableCollapsibleSidebar
+        >
+          <Box sx={{ flex: 1, padding: 0 }}>
+          <DemoPageContent pathname={router.pathname} />
+          </Box>
+        </DashboardLayout>
+      </AppProvider>
+    </WalletContext.Provider>
   );
 }

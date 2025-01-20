@@ -1,3 +1,4 @@
+import { Eip1193Provider, ethers, parseUnits } from "ethers"; 
 import React, { useState } from 'react';
 import {
   Box,
@@ -71,16 +72,68 @@ const LockTokenPage: React.FC = () => {
     setLockDetails({ ...lockDetails, [e.target.name]: e.target.value });
   };
 
-  const handleLock = () => {
+  const handleLock = async () => {
     if (!lockDetails.tokenAddress || !lockDetails.amount || !lockDetails.lockDate) {
-      alert('Please fill out all fields before proceeding.');
+      alert("Please fill out all fields before proceeding.");
       return;
     }
-
-    console.log('Locking Details:', lockDetails);
-    alert('Token or Liquidity locked successfully!');
+  
+    try {
+      // Convert lock date to a UNIX timestamp
+      const unlockTime = Math.floor(lockDetails.lockDate.valueOf() / 1000);
+  
+      // Connect to Ethereum provider (MetaMask)
+      if (!window.ethereum) {
+        alert("MetaMask is required to lock tokens.");
+        return;
+      }
+  
+      // Explicitly cast `window.ethereum` to `Eip1193Provider`
+      const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+      const signer = await provider.getSigner();
+  
+      // Replace with your deployed contract address
+      const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
+  
+      // Replace with your CapsuleGuard contract ABI
+      const contractABI = [
+        "function lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime) external",
+      ];
+  
+      // Replace with your ERC20 token ABI
+      const tokenABI = [
+        "function approve(address spender, uint256 amount) external returns (bool)",
+      ];
+  
+      const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
+  
+      // Approve the CapsuleGuard contract to spend the tokens
+      const amountToApprove = parseUnits(lockDetails.amount, 18); // Updated utility function
+      const approveTx = await tokenContract.approve(contractAddress, amountToApprove);
+      await approveTx.wait(); // Wait for the approval transaction to be mined
+  
+      console.log("Tokens approved successfully!");
+  
+      // Interact with the CapsuleGuard contract
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+  
+      // Call the lockTokens function
+      const lockTx = await contract.lockTokens(
+        lockDetails.tokenAddress,
+        amountToApprove,
+        unlockTime
+      );
+  
+      await lockTx.wait(); // Wait for the locking transaction to be mined
+  
+      alert("Tokens locked successfully!");
+      console.log("Lock transaction successful:", lockTx);
+    } catch (error) {
+      console.error("Error locking tokens:", error);
+      alert("Failed to lock tokens. Check the console for details.");
+    }
   };
-
+    
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Container maxWidth="md" sx={{ mt: 5, position: 'relative' }}>

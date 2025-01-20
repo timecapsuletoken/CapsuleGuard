@@ -10,6 +10,8 @@ contract CapsuleGuard {
         uint256 unlockTime;
     }
     mapping(address => mapping(address => TokenLockInfo)) private _tokenLocks;
+    mapping(address => address[]) private _userTokens;
+    mapping(address => mapping(address => bool)) private _userTokenExists;
 
     event TokensLocked(address indexed token, address indexed locker, uint256 amount, uint256 unlockTime);
     event TokensWithdrawn(address indexed token, address indexed locker, uint256 amount);
@@ -39,6 +41,12 @@ contract CapsuleGuard {
         TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][tokenAddress];
         lockInfo.lockedAmount += amount;
         lockInfo.unlockTime = unlockTime;
+
+        // Track the token address for the user
+        if (!_userTokenExists[msg.sender][tokenAddress]) {
+            _userTokens[msg.sender].push(tokenAddress);
+            _userTokenExists[msg.sender][tokenAddress] = true;
+        }
 
         emit TokensLocked(tokenAddress, msg.sender, amount, unlockTime);
     }
@@ -88,4 +96,13 @@ contract CapsuleGuard {
         TokenLockInfo memory lockInfo = _tokenLocks[lockerAddress][tokenAddress];
         return (lockInfo.lockedAmount, lockInfo.unlockTime);
     }
+
+    function getUserTokens(address user) 
+        external 
+        view 
+        returns (address[] memory)
+    {
+        return _userTokens[user];
+    }
+
 }
