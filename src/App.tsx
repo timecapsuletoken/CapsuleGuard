@@ -72,6 +72,48 @@ const chains = [
     explorerUrl: 'https://arbiscan.io',
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
   },
+  {
+    chainId: 25,
+    name: 'Cronos',
+    currency: 'CRO',
+    explorerUrl: 'https://cronoscan.com',
+    rpcUrl: 'https://evm.cronos.org',
+  },
+  {
+    chainId: 10,
+    name: 'Optimism',
+    currency: 'ETH',
+    explorerUrl: 'https://optimistic.etherscan.io',
+    rpcUrl: 'https://mainnet.optimism.io',
+  },
+  {
+    chainId: 137,
+    name: 'Polygon',
+    currency: 'MATIC',
+    explorerUrl: 'https://polygonscan.com',
+    rpcUrl: 'https://polygon-rpc.com',
+  },
+  {
+    chainId: 43114,
+    name: 'Avalanche',
+    currency: 'AVAX',
+    explorerUrl: 'https://snowtrace.io',
+    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+  },
+  {
+    chainId: 8453,
+    name: 'Base',
+    currency: 'ETH',
+    explorerUrl: 'https://basescan.org',
+    rpcUrl: 'https://mainnet.base.org',
+  },
+  {
+    chainId: 59144,
+    name: 'Linea',
+    currency: 'ETH',
+    explorerUrl: 'https://explorer.linea.build',
+    rpcUrl: 'https://rpc.linea.build',
+  },
 ];
 
 const web3Config = defaultConfig({
