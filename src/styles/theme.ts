@@ -25,7 +25,7 @@ export const Theme = createTheme({
           contrastText: "#ffffff",
         },
         text: {
-          primary: "#333333",
+          primary: "#333",
           secondary: "#555555",
         },
       },
@@ -40,13 +40,13 @@ export const Theme = createTheme({
           main: "#1ec8d8",
           light: "rgb(191, 250, 255)",
           dark: "rgb(18, 101, 109)",
-          contrastText: "#ffffff",
+          contrastText: "#1c1c1c",
         },
         secondary: {
           main: "rgb(0, 157, 172)",
           light: "rgb(224, 252, 255)",
           dark: "rgb(0, 108, 117)",
-          contrastText: "#ffffff",
+          contrastText: "#1c1c1c",
         },
         text: {
           primary: "#ffffff",
@@ -57,7 +57,9 @@ export const Theme = createTheme({
   },
   typography: {
     fontFamily: "'Lunasima', 'Arial', sans-serif",
-    h1: { fontSize: "2rem", fontWeight: 700 },
+    h1: { fontSize: "4rem", fontWeight: 700 },
+    h2: { fontSize: "1.5rem", fontWeight: 600 },
+    h3: { fontSize: "0.5rem", fontWeight: 500 },
     body1: { fontSize: "1rem", lineHeight: 1.5 },
   },
   breakpoints: {

@@ -86,7 +86,7 @@ const CapsuleGuardHero: React.FC = () => {
 
       {/* Main Content */}
       <HeroContent maxWidth="md">
-        <Typography variant="h2" color="primary.main" gutterBottom>
+        <Typography variant="h1" color="primary.main" gutterBottom>
           Welcome to <strong>Capsule Guard</strong>
         </Typography>
         <Typography variant="h6" color="secondary.light" paragraph>

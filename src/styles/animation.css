@@ -1,0 +1,116 @@
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
+}
+
+@keyframes wiggle {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  25% {
+    transform: translate(3px, -3px);
+  }
+  50% {
+    transform: translate(-3px, 3px);
+  }
+  75% {
+    transform: translate(3px, 3px);
+  }
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+.floating-shape {
+  position: absolute;
+  animation: float 40s infinite ease-in-out, wiggle 10s infinite ease-in-out; /* Combined animations */
+  opacity: 0.7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 8%;
+  height: 8%;
+  border-radius: 16px;
+}
+
+.floating-shape img {
+  width: 50%;
+}
+
+.floating-shape.circle {
+  border-radius: 50%;
+}
+
+.floating-shape.square {
+  border-radius: 0%;
+}
+
+.floating-shape:nth-child(1) {
+  top: 5%;
+  left: 15%;
+  background-color: #ff5722;
+  animation-duration: 50s, 10s;
+}
+
+.floating-shape:nth-child(2) {
+  top: 40%;
+  left: 75%;
+  background-color: #03a9f4;
+  animation-duration: 55s, 12s;
+}
+
+.floating-shape:nth-child(3) {
+  top: 20%;
+  left: 25%;
+  background-color: #8bc34a;
+  animation-duration: 60s, 14s;
+}
+
+.floating-shape:nth-child(4) {
+  top: 70%;
+  left: 15%;
+  background-color: #ffc107;
+  animation-duration: 45s, 11s;
+}
+
+.floating-shape:nth-child(5) {
+  top: 10%;
+  left: 85%;
+  background-color: #e91e63;
+  animation-duration: 55s, 13s;
+}
+
+.floating-shape:nth-child(6) {
+  top: 80%;
+  left: 45%;
+  background-color: #673ab7;
+  animation-duration: 50s, 15s;
+}
+
+.floating-shape:nth-child(7) {
+  top: 80%;
+  left: 75%;
+  background-color: #2196f3;
+  animation-duration: 45s, 10s;
+}
+
+.floating-shape:nth-child(8) {
+  top: 40%;
+  left: 10%;
+  background-color: #4caf50;
+  animation-duration: 60s, 12s;
+}
+
+.floating-shape:nth-child(9) {
+  top: 15%;
+  left: 45%;
+  background-color: #4caf50;
+  animation-duration: 60s, 14s;
+}
