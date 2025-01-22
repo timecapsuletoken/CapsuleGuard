@@ -177,7 +177,7 @@ function SidebarFooter({ mini }: SidebarFooterProps) {
         variant="caption"
         sx={{ m: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}
       >
-        {mini ? '© $TCA' : `© ${new Date().getFullYear()} Made with love by $TCA`}
+        {mini ? '© $TCA' : `CapsuleGuard © ${new Date().getFullYear()} dApp by $TCA`}
       </Typography>
     </Box>
   );

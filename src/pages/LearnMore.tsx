@@ -1,8 +1,19 @@
 import React from 'react';
 import { Box, Typography, Container, Grid, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import Slider from 'react-infinite-logo-slider';
 import InfoIcon from '@mui/icons-material/Info';
 import CodeIcon from '@mui/icons-material/Code';
 import SecurityIcon from '@mui/icons-material/Security';
+
+import EthLogo from '../assets/images/walletproviders/ethereum.png';
+import ArbLogo from '../assets/images/walletproviders/arbitrum.png';
+import BNBLogo from '../assets/images/walletproviders/bnb.png';
+import OpLogo from '../assets/images/walletproviders/optimism.png';
+import PolLogo from '../assets/images/walletproviders/polygon.png';
+import AvaxLogo from '../assets/images/walletproviders/Avax.png';
+import coinbaseLogo from '../assets/images/walletproviders/coinbase.png';
+import lineaLogo from '../assets/images/walletproviders/linea.png';
+import CronosLogo from '../assets/images/walletproviders/cronos.png';
 
 const LearnMore: React.FC = () => {
   return (
@@ -93,8 +104,57 @@ const LearnMore: React.FC = () => {
           </Paper>
         </Grid>
 
+        {/* Supported Networks */}
+        <Grid item xs={6}>
+          <Paper elevation={3} sx={{ p: 4.2 }}>
+            <Typography variant="h5" gutterBottom>
+              Supported Networks
+            </Typography>
+            <Typography>
+              CapsuleGuard is compatible with a wide range of blockchain networks, ensuring flexibility and accessibility for your token and liquidity management needs. Explore our support for popular networks like Ethereum, BNB Smart Chain, Polygon, and more.
+            </Typography>
+            <Box sx={{ my: 4 }}>
+              <Slider
+                width="200px" // Width of each slide
+                duration={30} // Duration for one complete scroll (in seconds)
+                pauseOnHover={false} // Pause scrolling on hover
+                blurBorders={false} // Disable blur effect on borders
+              >
+                <Slider.Slide>
+                  <img src={EthLogo} width="80px" alt="Eth" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={BNBLogo} width="80px" alt="BNB" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={ArbLogo} width="80px" alt="Arbitrum" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={OpLogo} width="80px" alt="Optimism" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={CronosLogo} width="80px" alt="Cronos" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={PolLogo} width="80px" alt="Polygon" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={AvaxLogo} width="80px" alt="Avalance" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={coinbaseLogo} width="80px" alt="Base" />
+                </Slider.Slide>
+                <Slider.Slide>
+                  <img src={lineaLogo} width="80px" alt="Linea" />
+                </Slider.Slide>
+                {/* Add more slides as needed */}
+              </Slider>
+            </Box>
+          </Paper>
+        </Grid>
+
         {/* Technologies Used */}
-        <Grid item xs={12}>
+        <Grid item xs={6}>
           <Paper elevation={3} sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
               Technologies Used
@@ -127,7 +187,7 @@ const LearnMore: React.FC = () => {
 
         {/* Additional Info */}
         <Grid item xs={12}>
-          <Paper elevation={3} sx={{ p: 3 }}>
+          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
             <Typography variant="h5" gutterBottom>
               Additional Information
             </Typography>
