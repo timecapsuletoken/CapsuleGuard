@@ -18,10 +18,11 @@ import {
 } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import { Theme } from "../styles/theme"; // Adjust the path as necessary
+import { useNotifications } from '@toolpad/core/useNotifications';
 
 import Lottie from 'lottie-react';
-
-import AutoDeleteIcon from '@mui/icons-material/AutoDelete';
+import KeyIcon from '@mui/icons-material/Key';
+import SafetyCheckIcon from '@mui/icons-material/SafetyCheck';
 import animationData from '../assets/images/animations/notfound.json';
 
 type LockedToken = {
@@ -36,6 +37,7 @@ const LockedTokens: React.FC = () => {
   const [lockedTokens, setLockedTokens] = useState<LockedToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
+  const notifications = useNotifications();
 
   const contractAddress = CONTRACT_ADDRESS;
   const contractABI = [
@@ -46,7 +48,10 @@ const LockedTokens: React.FC = () => {
 
   const fetchLockedTokens = async () => {
     if (!address || !provider) {
-      console.log("Wallet not connected or provider unavailable");
+      notifications.show("Wallet not connected or provider unavailable", {
+        severity: 'info',
+        autoHideDuration: 3000,
+      });
       return;
     }
   
@@ -61,6 +66,10 @@ const LockedTokens: React.FC = () => {
   
       if (tokenAddresses.length === 0) {
         console.log("No locked tokens found for this wallet.");
+        notifications.show("No locked tokens found for this wallet", {
+          severity: 'info',
+          autoHideDuration: 3000,
+        });
         setLockedTokens([]);
         return;
       }
@@ -84,7 +93,10 @@ const LockedTokens: React.FC = () => {
       setLockedTokens(results);
     } catch (error) {
       console.error("Error fetching locked tokens:", error);
-      alert("Failed to fetch locked tokens. Check the console for details.");
+      notifications.show('Failed to fetch locked tokens', {
+        severity: 'warning',
+        autoHideDuration: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -93,6 +105,10 @@ const LockedTokens: React.FC = () => {
   const handleWithdraw = async (tokenAddress: string) => {
     if (!address || !provider) {
       console.log("Wallet not connected or provider unavailable");
+      notifications.show("Wallet not connected or provider unavailable", {
+        severity: 'info',
+        autoHideDuration: 3000,
+      });
       return;
     }
 
@@ -104,11 +120,17 @@ const LockedTokens: React.FC = () => {
       const tx = await contract.withdrawTokens(tokenAddress);
       await tx.wait();
 
-      alert(`Tokens successfully withdrawn for token: ${tokenAddress}`);
+      notifications.show(`Tokens successfully withdrawn for token: ${tokenAddress}`, {
+        severity: 'success',
+        autoHideDuration: 3000,
+      });
       fetchLockedTokens(); // Refresh data after withdrawal
     } catch (error) {
       console.error("Error withdrawing tokens:", error);
-      alert("Failed to withdraw tokens. Check the console for details.");
+      notifications.show("Failed to withdraw tokens", {
+        severity: 'error',
+        autoHideDuration: 3000,
+      });
     } finally {
       setWithdrawing(null);
     }
@@ -137,7 +159,7 @@ const LockedTokens: React.FC = () => {
             >
               <CircularProgress />
             </Box>
-          ) : lockedTokens.length === 0 ? (
+          ) : lockedTokens.length === 0 || lockedTokens.every((token) => token.lockedAmount === "0" || token.lockedAmount === "0.0") ? (
             <Box sx={{ width: '100%' }}>
               <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
                 <Grid display="flex" justifyContent="center" alignItems="center" size={12}>
@@ -171,14 +193,15 @@ const LockedTokens: React.FC = () => {
                           <Button
                             variant="contained"
                             color="primary"
+                            startIcon={<KeyIcon />}
                             onClick={() => handleWithdraw(token.tokenAddress)}
                             disabled={withdrawing === token.tokenAddress}
                           >
                             {withdrawing === token.tokenAddress ? "Withdrawing..." : "Withdraw"}
                           </Button>
                         ) : (
-                          <Button variant="outlined" startIcon={<AutoDeleteIcon />} disabled>
-                            Unlock
+                          <Button variant="outlined" startIcon={<SafetyCheckIcon />} disabled>
+                            Withdraw
                           </Button>
                         )}
                       </TableCell>
@@ -190,12 +213,13 @@ const LockedTokens: React.FC = () => {
           )}
         </Box>
 
-        {/* Footer */}
-        <Box sx={{ flexShrink: 0, textAlign: 'center', mt: 2 }}>
+        {/* Footer 
+        <Box sx={{ flexShrink: 0, textAlign: 'center', mt: 0 }}>
           <Typography variant="body2" color="textSecondary">
             Powered by CapsuleGuard
           </Typography>
         </Box>
+        */}
     </Box>
   );
 };

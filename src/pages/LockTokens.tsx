@@ -12,7 +12,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -138,11 +138,18 @@ const LockTokenPage: React.FC = () => {
       const amountToApprove = parseUnits(lockDetails.amount, 18);
       const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, amountToApprove);
       await approveTx.wait();
-      alert("Tokens approved successfully!");
+      notifications.show('Tokens approved successfully', {
+        severity: 'success',
+        autoHideDuration: 3000,
+      });
+
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
       console.error("Error approving tokens:", error);
-      alert("Failed to approve tokens.");
+      notifications.show('Failed to approve tokens', {
+        severity: 'error',
+        autoHideDuration: 3000,
+      });
     } finally {
       setApproving(false);
     }
@@ -181,11 +188,17 @@ const LockTokenPage: React.FC = () => {
         unlockTime
       );
       await lockTx.wait();
-      alert("Tokens locked successfully!");
+      notifications.show('Tokens locked successfully', {
+        severity: 'success',
+        autoHideDuration: 3000,
+      });
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
       console.error("Error locking tokens:", error);
-      alert("Failed to lock tokens.");
+      notifications.show('Failed to lock tokens', {
+        severity: 'error',
+        autoHideDuration: 3000,
+      });
     } finally {
       setLocking(false);
     }
@@ -342,13 +355,14 @@ const LockTokenPage: React.FC = () => {
                 />
               )}
               {activeStep === 2 && (
-                <DatePicker
+                <DateTimePicker
                   label="Lock Until"
                   value={lockDetails.lockDate}
                   onChange={(newDate) =>
                     setLockDetails({ ...lockDetails, lockDate: newDate })
                   }
                   slotProps={{ textField: { fullWidth: true } }}
+                  minDate={dayjs()} 
                 />
               )}
               {activeStep === 3 && (
@@ -368,7 +382,7 @@ const LockTokenPage: React.FC = () => {
                   {locking ? (
                     <>
                       <CircularProgress />
-                      <Typography sx={{ marginTop: 2 }}>Locking tokens, please wait...</Typography>
+                      <Typography sx={{ marginTop: 0 }}>Locking tokens, please wait...</Typography>
                     </>
                   ) : (
                     <Typography>Click "Next" to lock your tokens.</Typography>
@@ -424,6 +438,15 @@ const LockTokenPage: React.FC = () => {
                   size="small"
                   onClick={handleBack}
                   disabled={activeStep === 0}
+                  sx={{
+                    color: theme.palette.primary.light, // Custom text color
+                    "&:hover": {
+                      color: theme.palette.primary.contrastText, // Custom text color
+                    },
+                    "&:disabled": {
+                      //backgroundColor: "#e0e0e0", // Disabled state color
+                    },
+                  }}  
                 >
                   {theme.direction === "rtl" ? (
                     <KeyboardArrowRightIcon />

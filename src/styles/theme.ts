@@ -59,7 +59,7 @@ export const Theme = createTheme({
     fontFamily: "'Lunasima', 'Arial', sans-serif",
     h1: { fontSize: "4rem", fontWeight: 700 },
     h2: { fontSize: "1.5rem", fontWeight: 600 },
-    h3: { fontSize: "0.5rem", fontWeight: 500 },
+    h3: { fontSize: "1.5rem", fontWeight: 500 },
     body1: { fontSize: "1rem", lineHeight: 1.5 },
   },
   breakpoints: {

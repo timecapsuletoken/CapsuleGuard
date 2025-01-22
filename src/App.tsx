@@ -1,23 +1,18 @@
 import * as React from 'react';
 import { ethers } from "ethers";
 import { Box, Stack, Avatar, Typography, Chip, Link } from '@mui/material';
-import { Theme } from "./styles/theme"; // Adjust the path as necessary
-import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
+import { Theme } from "./styles/theme"; 
+import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon, Help as HelpIcon } from '@mui/icons-material';
 import CGLogo from './assets/images/logos/logo.png';
+import { FaDiscord } from "react-icons/fa";
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout, ThemeSwitcher, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
+import PageRouter from './components/PageRouter';
 import { useDemoRouter } from '@toolpad/core/internal';
 import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider  } from 'web3modal-web3js/react';
 import { PROJECT_ID } from "./config";
-import DashboardPage from './pages/index'; // Dashboard content
-import LockTokens from './pages/LockTokens'; // Lock Tokens content
-import LockedTokens from './pages/LockedTokens'; // Lock Tokens content
 
 const NAVIGATION: Navigation = [
-  {
-    kind: 'header',
-    title: 'Main items',
-  },
   {
     segment: 'dashboard',
     title: 'Dashboard',
@@ -38,6 +33,22 @@ const NAVIGATION: Navigation = [
     segment: 'locked',
     title: 'Locked Tokens',
     icon: <LockOpenIcon />,
+  },
+  {
+    kind: 'divider',
+  },
+  {
+    segment: 'LearnMore',
+    title: 'Learn More',
+    icon: <HelpIcon />,
+  },
+  {
+    kind: 'divider',
+  },
+  {
+    segment: "Support",
+    title: "Support",
+    icon: <FaDiscord style={{ fontSize: "24px", color: "inherit" }} />, 
   },
 ];
 
@@ -66,7 +77,7 @@ const chains = [
     rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545/',
   },
   {
-    chainId: 42161,
+    chainId: 42161, 
     name: 'Arbitrum',
     currency: 'ETH',
     explorerUrl: 'https://arbiscan.io',
@@ -77,7 +88,7 @@ const chains = [
     name: 'Cronos',
     currency: 'CRO',
     explorerUrl: 'https://cronoscan.com',
-    rpcUrl: 'https://evm.cronos.org',
+    rpcUrl: 'https://evm-cronos.crypto.org',
   },
   {
     chainId: 10,
@@ -145,7 +156,7 @@ createWeb3Modal({
   },
 });
 
-function ToolbarActionsSearch() {
+function ToolbarThemeSwitcher() {
   return (
     <Stack direction="row">
       <ThemeSwitcher />
@@ -188,13 +199,6 @@ function CustomAppTitle() {
   );
 }
 
-function DemoPageContent({ pathname }: { pathname: string }) {
-  if (pathname === '/dashboard' || pathname === '/') return <DashboardPage />;
-  if (pathname === '/locker') return <LockTokens />;
-  if (pathname === '/locked') return <LockedTokens />;
-  return <Typography>404 - Page Not Found</Typography>;
-}
-
 interface DemoProps {
   /**
    * Injected by the documentation to work in an iframe.
@@ -235,27 +239,39 @@ export default function App(props: DemoProps) {
     }
   }, [walletProvider]);
 
+  React.useEffect(() => {
+    if (typeof globalThis.window !== "undefined") {
+      globalThis.window.history.replaceState({}, "", router.pathname);
+    }
+  }, [router.pathname]);  
+
   return (
     <WalletContext.Provider value={{ address, isConnected, provider, chainId }}>
-      <AppProvider
-        navigation={NAVIGATION}
-        router={router}
-        theme={Theme}
-        window={demoWindow}
-      >
-        <DashboardLayout
-          slots={{
-            appTitle: CustomAppTitle,
-            toolbarActions: ToolbarActionsSearch,
-            sidebarFooter: SidebarFooter,
-          }}
-          disableCollapsibleSidebar
+      <RouterContext.Provider value={{ navigate: router.navigate }}>
+        <AppProvider
+          navigation={NAVIGATION}
+          router={router}
+          theme={Theme}
+          window={demoWindow}
         >
-          <Box sx={{ flex: 1, padding: 0 }}>
-            <DemoPageContent pathname={router.pathname} />
-          </Box>
-        </DashboardLayout>
-      </AppProvider>
+          <DashboardLayout
+            slots={{
+              appTitle: CustomAppTitle,
+              toolbarActions: ToolbarThemeSwitcher,
+              sidebarFooter: SidebarFooter,
+            }}
+            disableCollapsibleSidebar
+          >
+            <Box sx={{ flex: 1, padding: 0 }}>
+              <PageRouter pathname={router.pathname} />
+            </Box>
+          </DashboardLayout>
+        </AppProvider>
+      </RouterContext.Provider>
     </WalletContext.Provider>
   );
 }
+
+export const RouterContext = React.createContext<{
+  navigate: (path: string) => void;
+}>({ navigate: () => {} });
