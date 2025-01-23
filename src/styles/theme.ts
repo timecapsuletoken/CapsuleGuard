@@ -8,6 +8,10 @@ export const Theme = createTheme({
   colorSchemes: {
     light: {
       palette: {
+        common: {
+          black: '#000',
+          white: '#fff',
+        },    
         background: {
           default: "#F9F9FE",
           paper: "#EEEEF9",
@@ -24,6 +28,9 @@ export const Theme = createTheme({
           dark: "#333333",
           contrastText: "#ffffff",
         },
+        action: {
+          hover: '#f5f5f5',
+        },    
         text: {
           primary: "#333",
           secondary: "#555555",
@@ -32,6 +39,10 @@ export const Theme = createTheme({
     },
     dark: {
       palette: {
+        common: {
+          black: '#000',
+          white: '#fff',
+        }, 
         background: {
           default: "#1c1c1c",
           paper: "#333333",
@@ -48,6 +59,9 @@ export const Theme = createTheme({
           dark: "rgb(0, 108, 117)",
           contrastText: "#1c1c1c",
         },
+        action: {
+          hover: '#f5f5f5',
+        }, 
         text: {
           primary: "#ffffff",
           secondary: "#bdbdbd",
@@ -58,17 +72,59 @@ export const Theme = createTheme({
   typography: {
     fontFamily: "'Lunasima', 'Arial', sans-serif",
     h1: { fontSize: "4rem", fontWeight: 700 },
-    h2: { fontSize: "1.5rem", fontWeight: 600 },
+    h2: { fontSize: "2rem", fontWeight: 600 },
     h3: { fontSize: "1.5rem", fontWeight: 500 },
     body1: { fontSize: "1rem", lineHeight: 1.5 },
+    button: { textTransform: "none", fontSize: "0.875rem" },
   },
   breakpoints: {
     values: {
       xs: 0,
       sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1536,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+        containedPrimary: {
+          backgroundColor: "#aa1ff4",
+          "&:hover": {
+            backgroundColor: "#8e1ad0",
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          backgroundColor: "#333333",
+          color: "#ffffff",
+          textAlign: "center",
+          fontWeight: 600,
+        },
+        body: {
+          fontSize: 14,
+          textAlign: "center",
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:nth-of-type(odd)": {
+            backgroundColor: "#f5f5f5",
+          },
+          "&:nth-of-type(odd).Mui-selected": {
+            backgroundColor: "rgba(170, 31, 244, 0.15)",
+          },
+        },
+      },
     },
   },
 });

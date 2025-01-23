@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { useContext } from "react";
 import { RouterContext } from "../App";
+import ParticleAnimation from "../components/AnimatedBackground";
 
 import { styled, keyframes } from '@mui/system';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
@@ -40,7 +41,7 @@ const FloatingIcon = styled(Box)(({ theme }) => ({
 }));
 
 const HeroContainer = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, rgb(179 51 244 / 15%), rgb(112 0 169 / 15%))',
+  background: '#1c1c1c',
   color: theme.palette.common.white,
   minHeight: '100vh',
   display: 'flex',
@@ -48,17 +49,6 @@ const HeroContainer = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   position: 'relative',
   overflow: 'hidden',
-}));
-
-const AnimatedBackground = styled(Box)(() => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0) 70%)',
-  zIndex: 0,
-  pointerEvents: 'none',
 }));
 
 const HeroContent = styled(Container)(() => ({
@@ -84,7 +74,7 @@ const CapsuleGuardHero: React.FC = () => {
   return (
     <HeroContainer>
       {/* Animated Background */}
-      <AnimatedBackground />
+      <ParticleAnimation />
 
       {/* Flying Icons */}
       <FlyingIcons>

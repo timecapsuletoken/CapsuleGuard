@@ -12,6 +12,16 @@ import { useDemoRouter } from '@toolpad/core/internal';
 import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider  } from 'web3modal-web3js/react';
 import { PROJECT_ID } from "./config";
 
+import EthLogo from './assets/images/walletproviders/ethereum.png';
+import ArbLogo from './assets/images/walletproviders/arbitrum.png';
+import BNBLogo from './assets/images/walletproviders/bnb.png';
+import OpLogo from './assets/images/walletproviders/optimism.png';
+import PolLogo from './assets/images/walletproviders/polygon.png';
+import AvaxLogo from './assets/images/walletproviders/Avax.png';
+import coinbaseLogo from './assets/images/walletproviders/coinbase.png';
+import lineaLogo from './assets/images/walletproviders/linea.png';
+import CronosLogo from './assets/images/walletproviders/cronos.png';
+
 const NAVIGATION: Navigation = [
   {
     segment: 'dashboard',
@@ -59,6 +69,7 @@ const chains = [
     chainId: 1,
     name: 'Ethereum',
     currency: 'ETH',
+    ChainIcon: EthLogo,
     explorerUrl: 'https://etherscan.io',
     rpcUrl: 'https://cloudflare-eth.com',
   },
@@ -66,6 +77,7 @@ const chains = [
     chainId: 56,
     name: 'BNB Smart Chain',
     currency: 'BNB',
+    ChainIcon: BNBLogo,
     explorerUrl: 'https://bscscan.com',
     rpcUrl: 'https://bsc-dataseed.bnbchain.org/',
   },
@@ -73,6 +85,7 @@ const chains = [
     chainId: 97,
     name: 'BNB Smart Chain Testnet',
     currency: 'tBNB',
+    ChainIcon: BNBLogo,
     explorerUrl: 'https://testnet.bscscan.com',
     rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545/',
   },
@@ -80,6 +93,7 @@ const chains = [
     chainId: 42161, 
     name: 'Arbitrum',
     currency: 'ETH',
+    ChainIcon: ArbLogo,
     explorerUrl: 'https://arbiscan.io',
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
   },
@@ -87,6 +101,7 @@ const chains = [
     chainId: 25,
     name: 'Cronos',
     currency: 'CRO',
+    ChainIcon: CronosLogo,
     explorerUrl: 'https://cronoscan.com',
     rpcUrl: 'https://evm-cronos.crypto.org',
   },
@@ -94,6 +109,7 @@ const chains = [
     chainId: 10,
     name: 'Optimism',
     currency: 'ETH',
+    ChainIcon: OpLogo,
     explorerUrl: 'https://optimistic.etherscan.io',
     rpcUrl: 'https://mainnet.optimism.io',
   },
@@ -101,6 +117,7 @@ const chains = [
     chainId: 137,
     name: 'Polygon',
     currency: 'MATIC',
+    ChainIcon: PolLogo,
     explorerUrl: 'https://polygonscan.com',
     rpcUrl: 'https://polygon-rpc.com',
   },
@@ -108,6 +125,7 @@ const chains = [
     chainId: 43114,
     name: 'Avalanche',
     currency: 'AVAX',
+    ChainIcon: AvaxLogo,
     explorerUrl: 'https://snowtrace.io',
     rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
   },
@@ -115,6 +133,7 @@ const chains = [
     chainId: 8453,
     name: 'Base',
     currency: 'ETH',
+    ChainIcon: coinbaseLogo,
     explorerUrl: 'https://basescan.org',
     rpcUrl: 'https://mainnet.base.org',
   },
@@ -122,6 +141,7 @@ const chains = [
     chainId: 59144,
     name: 'Linea',
     currency: 'ETH',
+    ChainIcon: lineaLogo,
     explorerUrl: 'https://explorer.linea.build',
     rpcUrl: 'https://rpc.linea.build',
   },
@@ -142,9 +162,17 @@ const web3Config = defaultConfig({
 const colorMain = Theme.palette.primary.main;
 const colorDark = Theme.palette.primary.dark;
 
+const transformedChains = chains.map((chain) => ({
+  chainId: chain.chainId,
+  nativeCurrency: { name: chain.currency, symbol: chain.currency, decimals: 18 },
+  blockExplorerUrls: [chain.explorerUrl], // Convert `explorerUrl` to array
+  rpcUrls: [chain.rpcUrl], // Convert `rpcUrl` to array
+  chainName: chain.name,
+}));
+
 createWeb3Modal({
   web3Config,
-  chains,
+  chains: transformedChains, 
   projectId,
   enableAnalytics: true,
   themeMode: 'dark',
@@ -212,14 +240,38 @@ const WalletContext = React.createContext<{
   isConnected: boolean;
   provider: ethers.BrowserProvider | null;
   chainId: number | undefined;
+  explorerUrl?: string;
+  ChainIcon?: string; // Add explorerUrl here
 }>({
   address: undefined,
   isConnected: false,
   provider: null,
   chainId: undefined,
+  explorerUrl: undefined,
+  ChainIcon: undefined,
 });
 
-export const useWallet = () => React.useContext(WalletContext);
+export const useWallet = () => {
+  const context = React.useContext(WalletContext);
+
+  if (!context) {
+    throw new Error("useWallet must be used within a WalletContext.Provider");
+  }
+
+  const explorerUrl = React.useMemo(() => {
+    if (!context.chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === context.chainId);
+    return chain?.explorerUrl; // Use `explorerUrl` here
+  }, [context.chainId]);
+
+  const ChainIcon = React.useMemo(() => {
+    if (!context.chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === context.chainId);
+    return chain?.ChainIcon;
+  }, [context.chainId]);
+
+  return { ...context, explorerUrl, ChainIcon };
+};
 
 export default function App(props: DemoProps) {
   const { window } = props;
@@ -231,6 +283,20 @@ export default function App(props: DemoProps) {
 
   // Create an ethers.js provider when `walletProvider` is available
   const [provider, setProvider] = React.useState<ethers.BrowserProvider | null>(null);
+
+  // Calculate explorerUrl
+  const explorerUrl = React.useMemo(() => {
+    if (!chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === chainId);
+    return chain?.explorerUrl; // Ensure it's accessing the correct field
+  }, [chainId]);
+
+   // Calculate ChainIcon
+   const ChainIcon = React.useMemo(() => {
+    if (!chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === chainId);
+    return chain?.ChainIcon; // Ensure it's accessing the correct field
+  }, [chainId]);
 
   React.useEffect(() => {
     if (walletProvider) {
@@ -246,7 +312,7 @@ export default function App(props: DemoProps) {
   }, [router.pathname]);  
 
   return (
-    <WalletContext.Provider value={{ address, isConnected, provider, chainId }}>
+    <WalletContext.Provider value={{ address, isConnected, provider, chainId, explorerUrl, ChainIcon }}>
       <RouterContext.Provider value={{ navigate: router.navigate }}>
         <AppProvider
           navigation={NAVIGATION}

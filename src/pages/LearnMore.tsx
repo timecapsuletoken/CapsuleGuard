@@ -117,11 +117,13 @@ const LearnMore: React.FC = () => {
               <Slider
                 width="200px" // Width of each slide
                 duration={30} // Duration for one complete scroll (in seconds)
-                pauseOnHover={false} // Pause scrolling on hover
+                pauseOnHover={true} // Pause scrolling on hover
                 blurBorders={false} // Disable blur effect on borders
               >
                 <Slider.Slide>
-                  <img src={EthLogo} width="80px" alt="Eth" />
+                  <a href="https://google.com">
+                    <img src={EthLogo} width="80px" alt="Eth" />
+                  </a>
                 </Slider.Slide>
                 <Slider.Slide>
                   <img src={BNBLogo} width="80px" alt="BNB" />
@@ -197,7 +199,7 @@ const LearnMore: React.FC = () => {
             </Typography>
             <Typography sx={{ mt: 2 }}>
               For any questions or support, please visit our{' '}
-              <a href="/support" style={{ color: '#9e03f2', textDecoration: 'none' }}>
+              <a target="_blank" href="https://discord.com/channels/1231742452453478400/1231744999419281438" style={{ color: '#9e03f2', textDecoration: 'none' }}>
                 Support Page
               </a>
               .

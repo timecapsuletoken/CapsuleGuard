@@ -4,28 +4,67 @@ import { useWallet } from "../App"; // Import wallet context
 import { CONTRACT_ADDRESS } from "../config";
 import {
   Box,
+  Stack,
   Divider,
   Typography,
   CircularProgress,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TableRow,
   Paper,
   Button,
+  Link,
+  Avatar,
 } from "@mui/material";
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import Grid from '@mui/material/Grid2';
+import { styled } from '@mui/material/styles';
 import { Theme } from "../styles/theme"; // Adjust the path as necessary
 import { useNotifications } from '@toolpad/core/useNotifications';
 
 import Lottie from 'lottie-react';
 import KeyIcon from '@mui/icons-material/Key';
+import LinkIcon from '@mui/icons-material/Link';
 import SafetyCheckIcon from '@mui/icons-material/SafetyCheck';
 import animationData from '../assets/images/animations/notfound.json';
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.background.paper,
+    borderRight: `1px solid ${theme.palette.background.default} !important`, // Add vertical divider
+    '&:last-child': {
+      borderRight: 'none', // Remove border from the last cell
+    },
+    color: theme.palette.text.primary,
+    textAlign: 'center',
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: theme.palette.text.primary,
+    borderRight: `1px solid ${theme.palette.background.paper} !important`, // Add vertical divider
+    '&:last-child': {
+      borderRight: 'none', // Remove border from the last cell
+    },
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.background.default,
+    border: `solid 1px ${theme.palette.background.paper}`,
+    color: theme.palette.primary.dark,
+  },
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+})); 
+
 type LockedToken = {
+  lockerAddress: string; 
   tokenAddress: string;
   lockedAmount: string;
   unlockTime: string;
@@ -33,7 +72,7 @@ type LockedToken = {
 };
 
 const LockedTokens: React.FC = () => {
-  const { address, provider } = useWallet(); // Access wallet context
+  const { address, provider, explorerUrl, ChainIcon } = useWallet(); // Access wallet context
   const [lockedTokens, setLockedTokens] = useState<LockedToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
@@ -80,6 +119,7 @@ const LockedTokens: React.FC = () => {
         const unlockTimeNumber = Number(unlockTime) * 1000;
 
         return {
+          lockerAddress: contractAddress, 
           tokenAddress,
           lockedAmount: ethers.formatUnits(lockedAmount, 18), // Adjust decimals if needed
           unlockTime: unlockTime > 0 ? new Date(Number(unlockTime) * 1000).toLocaleString() : "N/A", // Convert unlockTime to number
@@ -151,7 +191,7 @@ const LockedTokens: React.FC = () => {
         </Box>
 
         {/* Body */}
-        <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'stretch' }}>
           {loading ? (
             <Box
               className="TestCircularProgress"
@@ -175,20 +215,60 @@ const LockedTokens: React.FC = () => {
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Token Address</TableCell>
-                    <TableCell align="right">Locked Amount</TableCell>
-                    <TableCell align="right">Unlock Time</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
+                  <StyledTableRow>
+                    <StyledTableCell>Network</StyledTableCell>
+                    <StyledTableCell>Token Address</StyledTableCell>
+                    <StyledTableCell>Locker Address</StyledTableCell>
+                    <StyledTableCell>Locked Amount</StyledTableCell>
+                    <StyledTableCell>Unlock Time</StyledTableCell>
+                    <StyledTableCell>Actions</StyledTableCell>
+                  </StyledTableRow>
                 </TableHead>
                 <TableBody>
                   {lockedTokens.map((token, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{token.tokenAddress}</TableCell>
-                      <TableCell align="right">{token.lockedAmount}</TableCell>
-                      <TableCell align="right">{token.unlockTime}</TableCell>
-                      <TableCell align="right">
+                    <StyledTableRow key={index}>
+                      <StyledTableCell sx={{ justifyItems: 'center' }}>
+                        <Avatar
+                          //alt="Remy Sharp"
+                          src={ChainIcon}
+                          sx={{ width: 24, height: 24 }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                          <Link
+                            href={`${explorerUrl}/search?q=${token.tokenAddress}`}
+                            underline="none"
+                            target="_blank"
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <LinkIcon sx={{ mr: 0.5, color: Theme.palette.primary.dark }} />
+                            {`${token.tokenAddress.slice(0, 6)}...${token.tokenAddress.slice(-6)}`}
+                          </Link>
+                        </Stack>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                          <Link
+                            href={`${explorerUrl}/search?q=${token.lockerAddress}`}
+                            underline="none"
+                            target="_blank"
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <LinkIcon sx={{ mr: 0.5, color: Theme.palette.primary.dark }} />
+                            {`${token.lockerAddress.slice(0, 6)}...${token.lockerAddress.slice(-6)}`}
+                          </Link>
+                        </Stack>
+                      </StyledTableCell>
+                      <StyledTableCell>{token.lockedAmount}</StyledTableCell>
+                      <StyledTableCell>{token.unlockTime}</StyledTableCell>
+                      <StyledTableCell>
                         {token.isUnlocked ? (
                           <Button
                             variant="contained"
@@ -196,6 +276,8 @@ const LockedTokens: React.FC = () => {
                             startIcon={<KeyIcon />}
                             onClick={() => handleWithdraw(token.tokenAddress)}
                             disabled={withdrawing === token.tokenAddress}
+                            loading={withdrawing === token.tokenAddress ? true : false}
+                            loadingPosition="start"
                           >
                             {withdrawing === token.tokenAddress ? "Withdrawing..." : "Withdraw"}
                           </Button>
@@ -204,8 +286,8 @@ const LockedTokens: React.FC = () => {
                             Withdraw
                           </Button>
                         )}
-                      </TableCell>
-                    </TableRow>
+                      </StyledTableCell>
+                    </StyledTableRow>
                   ))}
                 </TableBody>
               </Table>
