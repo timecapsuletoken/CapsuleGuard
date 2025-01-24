@@ -85,6 +85,18 @@ const LockedTokens: React.FC = () => {
     "function withdrawTokens(address tokenAddress) external",
   ];
 
+  const fetchTokenDecimals = async (tokenAddress: string): Promise<number> => {
+    try {
+        const tokenABI = ["function decimals() view returns (uint8)"];
+        const tokenContract = new ethers.Contract(tokenAddress, tokenABI, provider);
+        const decimals = await tokenContract.decimals();
+        return decimals;
+    } catch (error) {
+        console.error(`Error fetching decimals for token ${tokenAddress}:`, error);
+        return 18; // Default to 18 decimals if fetching fails
+    }
+  };
+
   const fetchLockedTokens = async () => {
     if (!address || !provider) {
       notifications.show("Wallet not connected or provider unavailable", {
@@ -113,19 +125,20 @@ const LockedTokens: React.FC = () => {
         return;
       }
   
-      // Fetch lock details for each token
+      // Fetch lock details and decimals for each token
       const promises = tokenAddresses.map(async (tokenAddress) => {
         const [lockedAmount, unlockTime] = await contract.getLockDetails(address, tokenAddress);
+        const decimals = await fetchTokenDecimals(tokenAddress);
         const unlockTimeNumber = Number(unlockTime) * 1000;
 
         return {
-          lockerAddress: contractAddress, 
-          tokenAddress,
-          lockedAmount: ethers.formatUnits(lockedAmount, 18), // Adjust decimals if needed
-          unlockTime: unlockTime > 0 ? new Date(Number(unlockTime) * 1000).toLocaleString() : "N/A", // Convert unlockTime to number
-          isUnlocked: Date.now() > unlockTimeNumber,
+            lockerAddress: contractAddress,
+            tokenAddress,
+            lockedAmount: ethers.formatUnits(lockedAmount, decimals), // Dynamically adjust decimals
+            unlockTime: unlockTime > 0 ? new Date(Number(unlockTime) * 1000).toLocaleString() : "N/A",
+            isUnlocked: Date.now() > unlockTimeNumber,
         };
-      });
+      });    
   
       const results = (await Promise.all(promises)).filter(
         (token) => token.lockedAmount !== "0"

@@ -1,5 +1,6 @@
-import { Eip1193Provider, ethers, parseUnits } from "ethers"; 
+import { Eip1193Provider, ethers } from "ethers"; 
 import React, { useState } from 'react';
+import { useWallet } from "../App"; // Import wallet context
 import { CONTRACT_ADDRESS } from "../config";
 import {
   Box,
@@ -49,6 +50,7 @@ interface LockDetails {
 
 const LockTokenPage: React.FC = () => {
   const theme = useTheme();
+  const { isConnected } = useWallet(); // Access wallet context
   const notifications = useNotifications();
   const now = dayjs(); // Current date as a Dayjs object
   const [activeStep, setActiveStep] = useState(0);
@@ -60,6 +62,64 @@ const LockTokenPage: React.FC = () => {
     amount: '',
     lockDate: dayjs(), // Set initial date to the current day
   });  
+
+  if (!isConnected) {
+    
+    notifications.show('You must Connect a wallet first', {
+      severity: 'warning',
+      autoHideDuration: 3000,
+    });
+
+    return
+  }
+
+/*
+  const USDC_ADDRESSES: { [key: number]: string } = {
+    1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // Ethereum
+    56: "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", // BNB Smart Chain
+    97: "0xE06D18c81d41fF106BE2B00d322F6F3266E288Ca", // BNB Smart Chain Testnet
+    137: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // Polygon
+    42161: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8", // Arbitrum
+    43114: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e", // Avalanche
+    10: "0x7f5c764cbc14f9669b88837ca1490cca17c31607", // Optimism
+    8453: "0x5e156f7bc5b5c23eb423fcb3a509c4bd4636dfcb", // Base
+    59144: "0x4e163c3113ef4563b7d262d1de9e3a4cf122fe18", // Linea
+  };
+*/
+
+/*
+  const fetchUsdcAddress = async () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+      const contractABI = [
+        "function usdcTokenAddress() view returns (address)", // ABI to fetch the USDC address
+      ];
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);
+
+      // Fetch USDC token address
+      const usdcAddress = await contract.usdcTokenAddress();
+      console.log("USDC Address:", usdcAddress);
+      return usdcAddress;
+    } catch (error) {
+      console.error("Error fetching USDC address:", error);
+      throw new Error("Failed to fetch USDC address from the contract.");
+    }
+  };
+*/
+
+  const fetchTokenDecimals = async (tokenAddress: string): Promise<number> => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+      const tokenABI = ["function decimals() view returns (uint8)"];
+      const tokenContract = new ethers.Contract(tokenAddress, tokenABI, provider);
+      const decimals = Number(await tokenContract.decimals());
+      console.log("Decimals:", decimals);
+      return decimals;
+    } catch (error) {
+      console.error("Error fetching token decimals:", error);
+      throw new Error("Failed to fetch token decimals.");
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -102,7 +162,7 @@ const LockTokenPage: React.FC = () => {
   
     if (activeStep === 3) {
       await handleApprove();
-    } else if (activeStep === 4) {
+      } else if (activeStep === 4) {
       await handleLock();
     } else {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -115,45 +175,65 @@ const LockTokenPage: React.FC = () => {
 
   const handleApprove = async () => {
     if (!lockDetails.tokenAddress || !lockDetails.amount) {
-      notifications.show('Please complete all required fields!', {
-        severity: 'warning',
-        autoHideDuration: 3000,
-      });
-      return;
+        notifications.show('Please complete all required fields!', {
+            severity: 'warning',
+            autoHideDuration: 3000,
+        });
+        return;
     }
     try {
-      setApproving(true);
-      const provider = new ethers.BrowserProvider(
-        window.ethereum as unknown as Eip1193Provider
-      );
-      const signer = await provider.getSigner();
-      const tokenABI = [
-        "function approve(address spender, uint256 amount) external returns (bool)",
-      ];
-      const tokenContract = new ethers.Contract(
-        lockDetails.tokenAddress,
-        tokenABI,
-        signer
-      );
-      const amountToApprove = parseUnits(lockDetails.amount, 18);
-      const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, amountToApprove);
-      await approveTx.wait();
-      notifications.show('Tokens approved successfully', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
+        setApproving(true);
+        const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+        const signer = await provider.getSigner();
+        const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+        const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
 
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        // Fetch token decimals
+        const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
+        const lockAmount = ethers.parseUnits(lockDetails.amount, decimals);
+
+        // Fetch USDC token address
+        const usdcABI = ["function usdcTokenAddress() view returns (address)"];
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, usdcABI, provider);
+        const usdcAddress = await contract.usdcTokenAddress();
+
+        // Fetch USDC decimals dynamically (in case of future updates)
+        const usdcDecimals = await fetchTokenDecimals(usdcAddress);
+        const feeInUSDC = ethers.parseUnits("5", usdcDecimals);
+
+        // Approve tokens
+        if (lockDetails.tokenAddress === usdcAddress) {
+            // Combined approval for the same token
+            const totalApproval = lockAmount + feeInUSDC;
+            const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, totalApproval);
+            await approveTx.wait();
+        } else {
+            // Separate approvals for different tokens
+            const approveLockTx = await tokenContract.approve(CONTRACT_ADDRESS, lockAmount);
+            await approveLockTx.wait();
+
+            const usdcContract = new ethers.Contract(usdcAddress, tokenABI, signer);
+            const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
+            await approveFeeTx.wait();
+        }
+
+        notifications.show('Tokens and fees approved successfully', {
+            severity: 'success',
+            autoHideDuration: 3000,
+        });
+
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
-      console.error("Error approving tokens:", error);
-      notifications.show('Failed to approve tokens', {
-        severity: 'error',
-        autoHideDuration: 3000,
-      });
+        console.error("Error approving tokens or fees:", error);
+        notifications.show('Failed to approve tokens or fees', {
+            severity: 'error',
+            autoHideDuration: 3000,
+        });
     } finally {
-      setApproving(false);
+        setApproving(false);
     }
   };
+
 
   const handleLock = async () => {
 
@@ -177,11 +257,22 @@ const LockTokenPage: React.FC = () => {
         window.ethereum as unknown as Eip1193Provider
       );
       const signer = await provider.getSigner();
+
+      // Fetch token decimals
+      const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
+      
       const contractABI = [
         "function lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime) external",
       ];
       const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-      const amountToLock = parseUnits(lockDetails.amount, 18);
+      const amountToLock = ethers.parseUnits(lockDetails.amount, decimals);
+      console.log("Amount to Lock (scaled):", amountToLock.toString()); // Debug log
+      console.log("Locking Tokens:", {
+        tokenAddress: lockDetails.tokenAddress,
+        amountToLock: amountToLock.toString(),
+        unlockTime: unlockTime,
+      }); // Debug log
+  
       const lockTx = await contract.lockTokens(
         lockDetails.tokenAddress,
         amountToLock,
@@ -194,7 +285,9 @@ const LockTokenPage: React.FC = () => {
       });
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
-      console.error("Error locking tokens:", error);
+        if (error instanceof Error) {
+          console.error("Error message:", error.message);
+        }      
       notifications.show('Failed to lock tokens', {
         severity: 'error',
         autoHideDuration: 3000,
@@ -263,7 +356,6 @@ const LockTokenPage: React.FC = () => {
           overflow: 'hidden',
         }}
       >
-
           {/* Blurred Background */}
           <Box
             sx={{
@@ -277,7 +369,6 @@ const LockTokenPage: React.FC = () => {
               backdropFilter: 'blur(4px)', // Blur effect
             }}
           />
-
           {/* Floating Shapes */}
           <Box>
           {floatingShapes.map((shape, index) => (
@@ -366,7 +457,10 @@ const LockTokenPage: React.FC = () => {
                 />
               )}
               {activeStep === 3 && (
-                <Box sx={{ textAlign: "center", my: 2 }}>
+                <Box sx={{ marginTop: 2 }}>
+                  <Typography variant="subtitle2" color="primary">
+                    Note: A $5 fee will be charged in TCA before locking tokens.
+                  </Typography>
                   {approving ? (
                     <>
                       <CircularProgress />

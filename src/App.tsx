@@ -87,7 +87,7 @@ const chains = [
     currency: 'tBNB',
     ChainIcon: BNBLogo,
     explorerUrl: 'https://testnet.bscscan.com',
-    rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545/',
+    rpcUrl: 'https://bsc-testnet.bnbchain.org/',
   },
   {
     chainId: 42161, 

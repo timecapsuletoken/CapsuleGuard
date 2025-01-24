@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract CapsuleGuard {
+contract CGCV6 {
     // Mapping from locker -> token address -> lock info
     struct TokenLockInfo {
         uint256 lockedAmount;
@@ -21,6 +21,23 @@ contract CapsuleGuard {
         _;
     }
 
+    address private owner; // Contract owner
+    uint256 public collectedFees; // Total fees collected
+
+    // Fee in USDC (scaled to 6 decimals)
+    uint256 private constant FEE_IN_USD = 5 * (10 ** 6); // $5 fee (assuming USDC has 6 decimals)
+    address public usdcTokenAddress; // USDC token address
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the contract owner");
+        _;
+    }
+
+    constructor(address _usdcTokenAddress) {
+        owner = msg.sender;
+        usdcTokenAddress = _usdcTokenAddress;
+    }
+
     /**
      * @dev Locks a specified amount of tokens until a specified unlock time.
      * @param tokenAddress The address of the token to lock.
@@ -34,15 +51,52 @@ contract CapsuleGuard {
 
         IERC20 token = IERC20(tokenAddress);
 
-        // Transfer tokens from user to this contract
+        // Separate checks for fee and lock amount
+        if (tokenAddress == usdcTokenAddress) {
+            require(
+                token.allowance(msg.sender, address(this)) >= FEE_IN_USD + amount,
+                "Allowance insufficient"
+            );
+            require(
+                token.balanceOf(msg.sender) >= FEE_IN_USD + amount,
+                "Balance insufficient"
+            );
+
+            // Deduct the fee first
+            require(token.transferFrom(msg.sender, address(this), FEE_IN_USD), "Fee payment in USDC failed");
+        } else {
+            require(
+                token.allowance(msg.sender, address(this)) >= amount,
+                "Allowance insufficient for lock amount"
+            );
+            require(
+                token.balanceOf(msg.sender) >= amount,
+                "Balance insufficient for lock amount"
+            );
+
+            IERC20 usdcToken = IERC20(usdcTokenAddress);
+            require(
+                usdcToken.allowance(msg.sender, address(this)) >= FEE_IN_USD,
+                "Allowance insufficient for fee"
+            );
+            require(
+                usdcToken.balanceOf(msg.sender) >= FEE_IN_USD,
+                "Balance insufficient for fee"
+            );
+
+            // Deduct the fee
+            require(usdcToken.transferFrom(msg.sender, address(this), FEE_IN_USD), "Fee payment in USDC failed");
+        }
+
+        // Transfer the locked amount
         require(token.transferFrom(msg.sender, address(this), amount), "Token transfer failed");
 
-        // Update lock info in a single write operation
+        // Update lock details
         TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][tokenAddress];
         lockInfo.lockedAmount += amount;
         lockInfo.unlockTime = unlockTime;
 
-        // Track the token address for the user
+        // Track user tokens
         if (!_userTokenExists[msg.sender][tokenAddress]) {
             _userTokens[msg.sender].push(tokenAddress);
             _userTokenExists[msg.sender][tokenAddress] = true;
@@ -103,6 +157,23 @@ contract CapsuleGuard {
         returns (address[] memory)
     {
         return _userTokens[user];
+    }
+
+    // Function for the owner to withdraw collected fees
+    function withdrawFees() external onlyOwner {
+        require(collectedFees > 0, "No fees to withdraw");
+
+        uint256 amount = collectedFees;
+        collectedFees = 0; // Reset collected fees
+
+        IERC20 usdcToken = IERC20(usdcTokenAddress);
+        require(usdcToken.transfer(owner, amount), "Fee withdrawal failed");
+    }
+
+    // Update the USDC token address (owner only)
+    function updateUsdcTokenAddress(address _usdcTokenAddress) external onlyOwner {
+        require(_usdcTokenAddress != address(0), "Invalid address");
+        usdcTokenAddress = _usdcTokenAddress;
     }
 
 }

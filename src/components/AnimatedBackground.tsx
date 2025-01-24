@@ -21,7 +21,7 @@ const ParticleAnimation: React.FC = () => {
     if (!backgroundRef.current) return;
 
     const numberOfEls = 1000;
-    const duration = 2500;
+    const duration = 3000;
     const midScreenX = backgroundRef.current.offsetWidth / 2;
     const midScreenY = backgroundRef.current.offsetHeight / 2;
     const radius = Math.sqrt(midScreenX ** 2 + midScreenY ** 2);
