@@ -275,7 +275,16 @@ export const useWallet = () => {
 
 export default function App(props: DemoProps) {
   const { window } = props;
-  const router = useDemoRouter("/dashboard");
+
+  // Get the current pathname from the browser or default to "/dashboard"
+  const initialPathname =
+    typeof globalThis.window !== "undefined" && globalThis.window.location.pathname
+      ? globalThis.window.location.pathname
+      : "/dashboard";
+
+  // Initialize `useDemoRouter` with the current pathname
+  const router = useDemoRouter(initialPathname);
+
   const demoWindow = window !== undefined ? window() : undefined;
 
   const { address, isConnected, chainId } = useWeb3ModalAccount();

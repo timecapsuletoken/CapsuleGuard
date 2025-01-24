@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ethers } from "ethers";
 import { useWallet } from "../App"; // Import wallet context
 import { CONTRACT_ADDRESS } from "../config";
@@ -77,6 +77,7 @@ const LockedTokens: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
   const notifications = useNotifications();
+  const notificationShownRef = useRef(false); // Ref to prevent duplicate notifications
 
   const contractAddress = CONTRACT_ADDRESS;
   const contractABI = [
@@ -99,13 +100,18 @@ const LockedTokens: React.FC = () => {
 
   const fetchLockedTokens = async () => {
     if (!address || !provider) {
-      notifications.show("Wallet not connected or provider unavailable", {
-        severity: 'info',
-        autoHideDuration: 3000,
-      });
+      if (!notificationShownRef.current) {
+        notifications.show("Wallet not connected or provider unavailable", {
+          severity: "info",
+          autoHideDuration: 3000,
+        });
+        notificationShownRef.current = true; // Mark notification as shown
+      }
       return;
     }
   
+    notificationShownRef.current = false; // Reset notification state when connected
+
     setLoading(true);
   
     try {

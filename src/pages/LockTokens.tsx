@@ -52,6 +52,7 @@ const LockTokenPage: React.FC = () => {
   const theme = useTheme();
   const { isConnected } = useWallet(); // Access wallet context
   const notifications = useNotifications();
+  const notificationShownRef = React.useRef(false); // Ref to track if notification has been shown
   const now = dayjs(); // Current date as a Dayjs object
   const [activeStep, setActiveStep] = useState(0);
   const maxSteps = steps.length;
@@ -63,14 +64,25 @@ const LockTokenPage: React.FC = () => {
     lockDate: dayjs(), // Set initial date to the current day
   });  
 
-  if (!isConnected) {
-    
-    notifications.show('You must Connect a wallet first', {
-      severity: 'warning',
-      autoHideDuration: 3000,
-    });
+   // Use an effect to show the notification
+   React.useEffect(() => {
+    if (!isConnected && !notificationShownRef.current) {
+      notifications.show('You must Connect a wallet first', {
+        severity: 'warning',
+        autoHideDuration: 3000,
+      });
+      notificationShownRef.current = true; // Mark notification as shown
+    }
 
-    return
+    // Reset the ref when connected
+    if (isConnected) {
+      notificationShownRef.current = false;
+    }
+  }, [isConnected, notifications]);
+
+  // Return early if not connected
+  if (!isConnected) {
+    return null; // Render nothing if not connected
   }
 
 /*
