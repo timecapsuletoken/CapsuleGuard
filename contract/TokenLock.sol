@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract CGCV6 {
+contract CGCV8 {
     // Mapping from locker -> token address -> lock info
     struct TokenLockInfo {
         uint256 lockedAmount;
@@ -103,6 +103,41 @@ contract CGCV6 {
         }
 
         emit TokensLocked(tokenAddress, msg.sender, amount, unlockTime);
+    }
+
+    // Locks native tokens (e.g., ETH, BNB)
+    function lockNativeTokens(uint256 unlockTime) external payable {
+        require(msg.value > 0, "Amount must be greater than zero");
+        require(unlockTime > block.timestamp, "Unlock time must be in the future");
+
+        // Use `address(0)` to represent native tokens
+        TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][address(0)];
+        lockInfo.lockedAmount += msg.value;
+        lockInfo.unlockTime = unlockTime;
+
+        // Track user tokens
+        if (!_userTokenExists[msg.sender][address(0)]) {
+            _userTokens[msg.sender].push(address(0));
+            _userTokenExists[msg.sender][address(0)] = true;
+        }
+
+        emit TokensLocked(address(0), msg.sender, msg.value, unlockTime);
+    }
+
+    // Withdraws native tokens after the lock period has expired
+    function withdrawNativeTokens() external lockExpired(msg.sender, address(0)) {
+        TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][address(0)];
+        uint256 amount = lockInfo.lockedAmount;
+        require(amount > 0, "No tokens to withdraw");
+
+        // Reset locked amount
+        lockInfo.lockedAmount = 0;
+
+        // Transfer native tokens to the user
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Native token transfer failed");
+
+        emit TokensWithdrawn(address(0), msg.sender, amount);
     }
 
     /**

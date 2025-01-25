@@ -174,15 +174,30 @@ const LockedTokens: React.FC = () => {
     try {
       setWithdrawing(tokenAddress);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-      const tx = await contract.withdrawTokens(tokenAddress);
-      await tx.wait();
-
-      notifications.show(`Tokens successfully withdrawn for token: ${tokenAddress}`, {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
+  
+      // Check if the token is a native token
+      if (tokenAddress === "0x0" || tokenAddress.toLowerCase() === ethers.ZeroAddress.toLowerCase()) {
+        const nativeContractABI = ["function withdrawNativeTokens() external"];
+        const contract = new ethers.Contract(contractAddress, nativeContractABI, signer);
+  
+        const tx = await contract.withdrawNativeTokens();
+        await tx.wait();
+  
+        notifications.show("Native tokens successfully withdrawn!", {
+          severity: 'success',
+          autoHideDuration: 3000,
+        });
+      } else {
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const tx = await contract.withdrawTokens(tokenAddress);
+        await tx.wait();
+  
+        notifications.show(`Tokens successfully withdrawn for token: ${tokenAddress}`, {
+          severity: 'success',
+          autoHideDuration: 3000,
+        });
+      }
+  
       fetchLockedTokens(); // Refresh data after withdrawal
     } catch (error) {
       console.error("Error withdrawing tokens:", error);

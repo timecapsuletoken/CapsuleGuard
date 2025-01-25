@@ -3,15 +3,24 @@ import React, { useState, useContext } from 'react';
 import { RouterContext } from "../App";
 import { useWallet } from "../App";
 import { CONTRACT_ADDRESS } from "../config";
+import { TokenFetcher, TokenDetails } from '../components/TokenFetcher'; // Ensure you import the TokenDetails type
 import {
   Box,
   Typography,
   MobileStepper,
   Paper,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
   Button,
   Container,
   CircularProgress,
+  Divider,
 } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -19,7 +28,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-//import LockIcon from '@mui/icons-material/Lock';
 import dayjs, { Dayjs } from 'dayjs';
 import { motion } from "framer-motion";
 import { useNotifications } from '@toolpad/core/useNotifications';
@@ -51,7 +59,7 @@ interface LockDetails {
 
 const LockTokenPage: React.FC = () => {
   const theme = useTheme();
-  const { isConnected } = useWallet();
+  const { address, isConnected } = useWallet();
   const { navigate } = useContext(RouterContext);
   const notifications = useNotifications();
   const notificationShownRef = React.useRef(false); // Ref to track if notification has been shown
@@ -65,6 +73,23 @@ const LockTokenPage: React.FC = () => {
     amount: '',
     lockDate: dayjs(), // Set initial date to the current day
   });  
+  const [open, setOpen] = useState(false);
+  const [tokens, setTokens] = useState<TokenDetails[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+    setLoading(true); // Show loading spinner until tokens are fetched
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleTokensFetched = (fetchedTokens: TokenDetails[]) => {
+    setTokens(fetchedTokens);
+    setLoading(false);
+  };
 
    // Use an effect to show the notification
    React.useEffect(() => {
@@ -151,7 +176,12 @@ const LockTokenPage: React.FC = () => {
       lockDate: lockDetails.lockDate,
     };
   
-    if (activeStep === 0 && (!lockDetails.tokenAddress || lockDetails.tokenAddress.trim() === '') || !ethers.isAddress(lockDetails.tokenAddress.trim()) || !sanitizedInputs) {
+    if (activeStep === 0 && (
+      !lockDetails.tokenAddress || 
+      lockDetails.tokenAddress.trim() === '') || 
+      (!ethers.isAddress(lockDetails.tokenAddress.trim()) && lockDetails.tokenAddress !== 'native') || 
+      !sanitizedInputs 
+    ) {
       notifications.show('Please provide a valid Token or Liquidity Address', {
         severity: 'warning',
         autoHideDuration: 3000,
@@ -189,76 +219,120 @@ const LockTokenPage: React.FC = () => {
   };
 
   const handleApprove = async () => {
-    if (!lockDetails.tokenAddress || !lockDetails.amount) {
-        notifications.show('Please complete all required fields!', {
-            severity: 'warning',
-            autoHideDuration: 3000,
-        });
-        return;
+    if (
+      !lockDetails.tokenAddress || 
+      (lockDetails.tokenAddress !== 'native' && !ethers.isAddress(lockDetails.tokenAddress.trim())) ||
+      !lockDetails.amount || 
+      !lockDetails.lockDate
+    ) {
+      notifications.show('Please complete all required fields!', {
+        severity: 'warning',
+        autoHideDuration: 3000,
+      });
+      return;
     }
+  
     try {
-        setApproving(true);
-        const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
-        const signer = await provider.getSigner();
-        const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
-        const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
-
-        // Fetch token decimals
-        const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
-        const lockAmount = ethers.parseUnits(lockDetails.amount, decimals);
-
-        // Fetch USDC token address
-        const usdcABI = ["function usdcTokenAddress() view returns (address)"];
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, usdcABI, provider);
-        const usdcAddress = await contract.usdcTokenAddress();
-
-        // Fetch USDC decimals dynamically (in case of future updates)
-        const usdcDecimals = await fetchTokenDecimals(usdcAddress);
-        const feeInUSDC = ethers.parseUnits("5", usdcDecimals);
-
-        // Approve tokens
-        if (lockDetails.tokenAddress === usdcAddress) {
-            // Combined approval for the same token
-            const totalApproval = lockAmount + feeInUSDC;
-            const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, totalApproval);
-            await approveTx.wait();
-        } else {
-            // Separate approvals for different tokens
-            const approveLockTx = await tokenContract.approve(CONTRACT_ADDRESS, lockAmount);
-            await approveLockTx.wait();
-
-            const usdcContract = new ethers.Contract(usdcAddress, tokenABI, signer);
-            const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
-            await approveFeeTx.wait();
-        }
-
-        notifications.show('Tokens and fees approved successfully', {
+      setApproving(true);
+      const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+      const signer = await provider.getSigner();
+  
+      // Fetch USDC token address and decimals
+      const usdcABI = ["function usdcTokenAddress() view returns (address)"];
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, usdcABI, provider);
+      const usdcAddress = await contract.usdcTokenAddress();
+      const usdcDecimals = await fetchTokenDecimals(usdcAddress);
+      const feeInUSDC = ethers.parseUnits("5", usdcDecimals);
+  
+      switch (lockDetails.tokenAddress) {
+        case 'native': {
+          // Handle native token approval: Approve only the USDC fee
+          const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+          const usdcContract = new ethers.Contract(usdcAddress, tokenABI, signer);
+  
+          const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
+          await approveFeeTx.wait();
+  
+          notifications.show('USDC fee approved successfully!', {
             severity: 'success',
             autoHideDuration: 3000,
-        });
-
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    } catch (error) {
-        console.error("Error approving tokens or fees:", error);
-        notifications.show('Failed to approve tokens or fees', {
-            severity: 'error',
+          });
+          setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
+          break;
+        }
+  
+        case usdcAddress: {
+          // Combined approval for USDC lock and fees
+          const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+          const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
+          const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
+          const lockAmount = ethers.parseUnits(lockDetails.amount, decimals);
+  
+          const totalApproval = lockAmount + feeInUSDC;
+          const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, totalApproval);
+          await approveTx.wait();
+  
+          notifications.show('USDC lock and fees approved successfully!', {
+            severity: 'success',
             autoHideDuration: 3000,
-        });
+          });
+          setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
+          break;
+        }
+  
+        default: {
+          // Handle ERC20 token approval: Approve lock amount and USDC fees separately
+          const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+          const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
+          const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
+          const lockAmount = ethers.parseUnits(lockDetails.amount, decimals);
+  
+          // Approve lock amount
+          const approveLockTx = await tokenContract.approve(CONTRACT_ADDRESS, lockAmount);
+          await approveLockTx.wait();
+  
+          // Approve USDC fee
+          const usdcContract = new ethers.Contract(usdcAddress, tokenABI, signer);
+          const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
+          await approveFeeTx.wait();
+  
+          notifications.show('Tokens and fees approved successfully!', {
+            severity: 'success',
+            autoHideDuration: 3000,
+          });
+          setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
+          break;
+        }
+      }
+  
+    } catch (error) {
+      console.error("Error approving tokens or fees:", error);
+      notifications.show('Failed to approve tokens or fees', {
+        severity: 'error',
+        autoHideDuration: 3000,
+      });
     } finally {
-        setApproving(false);
+      setApproving(false);
     }
-  };
-
+  };  
 
   const handleLock = async () => {
 
-    if (!lockDetails.tokenAddress || lockDetails.tokenAddress.trim() === '') {
+    if (
+      !lockDetails.tokenAddress || 
+      (lockDetails.tokenAddress !== 'native' && lockDetails.tokenAddress.trim() === '')
+    ) {
       notifications.show('Please provide a valid Token or Liquidity Address!', {
         autoHideDuration: 3000,
       });
     }
 
-    if (!lockDetails.tokenAddress || !lockDetails.amount || !lockDetails.lockDate) {
+    if (
+      !lockDetails.tokenAddress || 
+      (lockDetails.tokenAddress !== 'native' && !ethers.isAddress(lockDetails.tokenAddress.trim())) ||
+      !lockDetails.amount || 
+      !lockDetails.lockDate
+    ) {
       notifications.show('Please complete all required fields!', {
         severity: 'warning',
         autoHideDuration: 3000,
@@ -273,31 +347,66 @@ const LockTokenPage: React.FC = () => {
       );
       const signer = await provider.getSigner();
 
-      // Fetch token decimals
-      const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
-      
-      const contractABI = [
-        "function lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime) external",
-      ];
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-      const amountToLock = ethers.parseUnits(lockDetails.amount, decimals);
-      console.log("Amount to Lock (scaled):", amountToLock.toString()); // Debug log
-      console.log("Locking Tokens:", {
-        tokenAddress: lockDetails.tokenAddress,
-        amountToLock: amountToLock.toString(),
-        unlockTime: unlockTime,
-      }); // Debug log
+      // Fetch USDC token address and fee
+      const usdcABI = ["function usdcTokenAddress() view returns (address)"];
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, usdcABI, provider);
+      const usdcAddress = await contract.usdcTokenAddress();
+      const usdcDecimals = await fetchTokenDecimals(usdcAddress);
+      const feeInUSDC = ethers.parseUnits("5", usdcDecimals);
+
+      // Check if we are locking a native token
+      if (lockDetails.tokenAddress === 'native') {
+        const nativeLockABI = [
+          "function lockNativeTokens(uint256 unlockTime) external payable",
+          "function transfer(address recipient, uint256 amount) external returns (bool)",
+        ];
+        const usdcContract = new ethers.Contract(usdcAddress, nativeLockABI, signer);
   
-      const lockTx = await contract.lockTokens(
-        lockDetails.tokenAddress,
-        amountToLock,
-        unlockTime
-      );
-      await lockTx.wait();
-      notifications.show('Tokens locked successfully', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
+        // Transfer USDC fee to the contract
+        const transferFeeTx = await usdcContract.transfer(CONTRACT_ADDRESS, feeInUSDC);
+        await transferFeeTx.wait();
+  
+        // Lock native tokens
+        const nativeLockContract = new ethers.Contract(CONTRACT_ADDRESS, nativeLockABI, signer);
+        console.log("Locking native tokens:", { amount: lockDetails.amount, unlockTime });
+  
+        const lockTx = await nativeLockContract.lockNativeTokens(unlockTime, {
+          value: ethers.parseEther(lockDetails.amount), // Convert to Wei
+        });
+        await lockTx.wait();
+  
+        notifications.show('Native tokens and fees locked successfully', {
+          severity: 'success',
+          autoHideDuration: 3000,
+        });
+      } else {
+        // Lock ERC20 tokens
+        const decimals = await fetchTokenDecimals(lockDetails.tokenAddress);
+
+        const contractABI = [
+          "function lockTokens(address tokenAddress, uint256 amount, uint256 unlockTime) external",
+        ];
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+        const amountToLock = ethers.parseUnits(lockDetails.amount, decimals);
+
+        console.log("Locking ERC20 tokens:", {
+          tokenAddress: lockDetails.tokenAddress,
+          amountToLock: amountToLock.toString(),
+          unlockTime,
+        });
+
+        const lockTx = await contract.lockTokens(
+          lockDetails.tokenAddress,
+          amountToLock,
+          unlockTime
+        );
+        await lockTx.wait();
+        notifications.show('ERC20 tokens locked successfully', {
+          severity: 'success',
+          autoHideDuration: 3000,
+        });
+      }
+
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
         if (error instanceof Error) {
@@ -442,13 +551,70 @@ const LockTokenPage: React.FC = () => {
 
             <Box sx={{ p: 3 }}>
               {activeStep === 0 && (
-                <TextField
-                  fullWidth
-                  label="Token or Liquidity Address"
-                  name="tokenAddress"
-                  value={lockDetails.tokenAddress}
-                  onChange={handleInputChange}
-                />
+                <Box>
+                  <Button variant="outlined" onClick={handleClickOpen}>
+                    Open Token Input
+                  </Button>
+                  <Dialog open={open} onClose={handleClose}>
+                    <DialogTitle>Enter Token or Liquidity Address</DialogTitle>
+                    <DialogContent>
+                    {loading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '150px' }}>
+                        <CircularProgress />
+                      </Box>
+                    ) : tokens.length > 0 ? (
+                      <List>
+                        {tokens.map((token, index) => (
+                          <ListItem key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <ListItemText
+                              primary={`${token.name} (${token.symbol})`}
+                              secondary={`Balance: ${token.balance}`}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => {
+                                setLockDetails({ ...lockDetails, tokenAddress: token.address });
+                                handleClose();
+                              }}
+                            >
+                              Select
+                            </Button>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Typography>No assets found in your wallet.</Typography>
+                    )}
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={handleClose}>Cancel</Button>
+                      <Button
+                        onClick={() => {
+                          handleClose();
+                        }}
+                      >
+                        Save
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                  {open && (
+                    <TokenFetcher
+                      address={address as string}
+                      isConnected={isConnected}
+                      onTokensFetched={handleTokensFetched}
+                    />
+                  )}
+                  <Divider sx={{ mt: 2 }} />
+                  <TextField
+                    fullWidth
+                    label="Token or Liquidity Address"
+                    name="tokenAddress"
+                    value={lockDetails.tokenAddress}
+                    onChange={handleInputChange}
+                    sx={{ mt: 2 }}
+                  />
+                </Box>
               )}
               {activeStep === 1 && (
                 <TextField
