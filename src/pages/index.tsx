@@ -16,7 +16,7 @@ import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import GClogo from '../assets/images/logos/CapsuleGuard.svg';
 
 const HeroContainer = styled(Box)(({ theme }) => ({
-  background: '#1c1c1c',
+  background: theme.palette.background.default,
   color: theme.palette.common.white,
   minHeight: '100vh',
   display: 'flex',

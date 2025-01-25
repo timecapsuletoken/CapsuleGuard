@@ -1,6 +1,7 @@
 import { Eip1193Provider, ethers } from "ethers"; 
-import React, { useState } from 'react';
-import { useWallet } from "../App"; // Import wallet context
+import React, { useState, useContext } from 'react';
+import { RouterContext } from "../App";
+import { useWallet } from "../App";
 import { CONTRACT_ADDRESS } from "../config";
 import {
   Box,
@@ -50,7 +51,8 @@ interface LockDetails {
 
 const LockTokenPage: React.FC = () => {
   const theme = useTheme();
-  const { isConnected } = useWallet(); // Access wallet context
+  const { isConnected } = useWallet();
+  const { navigate } = useContext(RouterContext);
   const notifications = useNotifications();
   const notificationShownRef = React.useRef(false); // Ref to track if notification has been shown
   const now = dayjs(); // Current date as a Dayjs object
@@ -71,14 +73,15 @@ const LockTokenPage: React.FC = () => {
         severity: 'warning',
         autoHideDuration: 3000,
       });
-      notificationShownRef.current = true; // Mark notification as shown
+      notificationShownRef.current = true; 
+      navigate("/dashboard")
     }
 
     // Reset the ref when connected
     if (isConnected) {
       notificationShownRef.current = false;
     }
-  }, [isConnected, notifications]);
+  }, [isConnected, notifications, navigate]);
 
   // Return early if not connected
   if (!isConnected) {
