@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract CGCV8 {
+contract CGCV9 {
     // Mapping from locker -> token address -> lock info
     struct TokenLockInfo {
         uint256 lockedAmount;
@@ -64,6 +64,7 @@ contract CGCV8 {
 
             // Deduct the fee first
             require(token.transferFrom(msg.sender, address(this), FEE_IN_USD), "Fee payment in USDC failed");
+            collectedFees += FEE_IN_USD; // Increment collected fees
         } else {
             require(
                 token.allowance(msg.sender, address(this)) >= amount,
@@ -86,6 +87,8 @@ contract CGCV8 {
 
             // Deduct the fee
             require(usdcToken.transferFrom(msg.sender, address(this), FEE_IN_USD), "Fee payment in USDC failed");
+            collectedFees += FEE_IN_USD; // Increment collected fees
+
         }
 
         // Transfer the locked amount
@@ -109,6 +112,15 @@ contract CGCV8 {
     function lockNativeTokens(uint256 unlockTime) external payable {
         require(msg.value > 0, "Amount must be greater than zero");
         require(unlockTime > block.timestamp, "Unlock time must be in the future");
+
+        // Handle USDC fee
+        IERC20 usdcToken = IERC20(usdcTokenAddress);
+        require(usdcToken.balanceOf(msg.sender) >= FEE_IN_USD, "Insufficient USDC balance for fees");
+        require(usdcToken.allowance(msg.sender, address(this)) >= FEE_IN_USD, "Insufficient USDC allowance for fees");
+        require(usdcToken.transferFrom(msg.sender, address(this), FEE_IN_USD), "Fee payment in USDC failed");
+
+        // Increment collectedFees
+        collectedFees += FEE_IN_USD;
 
         // Use `address(0)` to represent native tokens
         TokenLockInfo storage lockInfo = _tokenLocks[msg.sender][address(0)];

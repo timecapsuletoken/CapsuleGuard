@@ -246,20 +246,22 @@ const LockTokenPage: React.FC = () => {
   
       switch (lockDetails.tokenAddress) {
         case 'native': {
-          // Handle native token approval: Approve only the USDC fee
+          // Handle USDC fee approval for native tokens
           const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
           const usdcContract = new ethers.Contract(usdcAddress, tokenABI, signer);
-  
+        
+          console.log('Approving USDC fee for native token locking...');
           const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
           await approveFeeTx.wait();
-  
-          notifications.show('USDC fee approved successfully!', {
+        
+          notifications.show('USDC fee approved successfully for native tokens.', {
             severity: 'success',
             autoHideDuration: 3000,
           });
+        
           setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
           break;
-        }
+        }        
   
         case usdcAddress: {
           // Combined approval for USDC lock and fees
@@ -347,35 +349,20 @@ const LockTokenPage: React.FC = () => {
       );
       const signer = await provider.getSigner();
 
-      // Fetch USDC token address and fee
-      const usdcABI = ["function usdcTokenAddress() view returns (address)"];
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, usdcABI, provider);
-      const usdcAddress = await contract.usdcTokenAddress();
-      const usdcDecimals = await fetchTokenDecimals(usdcAddress);
-      const feeInUSDC = ethers.parseUnits("5", usdcDecimals);
-
       // Check if we are locking a native token
       if (lockDetails.tokenAddress === 'native') {
-        const nativeLockABI = [
-          "function lockNativeTokens(uint256 unlockTime) external payable",
-          "function transfer(address recipient, uint256 amount) external returns (bool)",
-        ];
-        const usdcContract = new ethers.Contract(usdcAddress, nativeLockABI, signer);
-  
-        // Transfer USDC fee to the contract
-        const transferFeeTx = await usdcContract.transfer(CONTRACT_ADDRESS, feeInUSDC);
-        await transferFeeTx.wait();
-  
+        const nativeLockABI = ["function lockNativeTokens(uint256 unlockTime) external payable"];
+      
         // Lock native tokens
         const nativeLockContract = new ethers.Contract(CONTRACT_ADDRESS, nativeLockABI, signer);
         console.log("Locking native tokens:", { amount: lockDetails.amount, unlockTime });
-  
+      
         const lockTx = await nativeLockContract.lockNativeTokens(unlockTime, {
           value: ethers.parseEther(lockDetails.amount), // Convert to Wei
         });
         await lockTx.wait();
-  
-        notifications.show('Native tokens and fees locked successfully', {
+      
+        notifications.show('Native tokens locked and fees collected successfully', {
           severity: 'success',
           autoHideDuration: 3000,
         });
