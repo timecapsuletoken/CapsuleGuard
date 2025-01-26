@@ -5,6 +5,7 @@ import {
   Container,
   Grid,
   Paper,
+  Chip,
   List,
   ListItem,
   ListItemIcon,
@@ -12,11 +13,21 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  CardContent,
+  Divider,
 } from '@mui/material';
+
+import { useContext } from "react";
+import { RouterContext } from "../App";
+import { useTheme } from "@mui/material/styles";
+
 import Slider from 'react-infinite-logo-slider';
 import InfoIcon from '@mui/icons-material/Info';
+import LanIcon from '@mui/icons-material/Lan';
 import CodeIcon from '@mui/icons-material/Code';
 import SecurityIcon from '@mui/icons-material/Security';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WalletIcon from '@mui/icons-material/Wallet';
 
 import EthLogo from '../assets/images/walletproviders/ethereum.png';
 import ArbLogo from '../assets/images/walletproviders/arbitrum.png';
@@ -27,9 +38,11 @@ import AvaxLogo from '../assets/images/walletproviders/Avax.png';
 import coinbaseLogo from '../assets/images/walletproviders/coinbase.png';
 import lineaLogo from '../assets/images/walletproviders/linea.png';
 import CronosLogo from '../assets/images/walletproviders/cronos.png';
-import { Theme } from '../styles/theme';
 
 const LearnMore: React.FC = () => {
+    const { navigate } = useContext(RouterContext);
+    const theme = useTheme();
+  
   return (
     <Container sx={{ mt: 5, px: { xs: 2, sm: 3 } }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -45,44 +58,87 @@ const LearnMore: React.FC = () => {
         {/* About the dApp */}
         <Grid item xs={12} md={6}>
           <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>
-              What is CapsuleGuard?
-            </Typography>
-            <Typography>
-              CapsuleGuard is a decentralized application (dApp) designed to provide a secure and efficient way to manage
-              token locking on various blockchain networks.
-              <br />
-              It allows users to lock tokens or liquidity for a set duration, ensuring transparency and trust for token
-              holders and projects alike. CapsuleGuard supports multiple blockchain networks, providing flexibility and
-              scalability for both individual users and project teams.
-            </Typography>
+            <CardContent>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+                  What is
+                </Typography>
+                <Typography variant="h5" component="div">
+                  CapsuleGuard
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', my: 1.5 }} component="div"><Chip label="Token Locking dApp" /></Typography>
+              </Box>
+              <Divider sx={{ my: 2 }}/>
+              <Typography variant="body1">
+                CapsuleGuard is a cutting-edge decentralized application (dApp) designed to provide a secure and efficient platform for managing token and liquidity locking across multiple blockchain networks.
+                <br />
+                With CapsuleGuard, users can securely lock tokens or liquidity for a predefined duration, fostering trust and transparency among token holders and project investors.
+                <br />
+                The dApp offers:
+                <ul>
+                  <li>Multi-chain support for networks such as Ethereum, BNB Smart Chain, Polygon, Arbitrum, and Avalanche, ensuring flexibility for diverse use cases.</li>
+                  <li>A user-friendly interface that guides users step-by-step, making the process seamless and accessible to everyone.</li>
+                  <li>Real-time asset management with a transparent unlock mechanism, allowing projects to showcase accountability.</li>
+                  <li>Integration with leading wallets like MetaMask and Coinbase Wallet for a secure and effortless user experience.</li>
+                </ul>
+                CapsuleGuard is the ideal solution for project teams and individuals seeking a reliable and scalable token-locking platform.
+              </Typography>
+            </CardContent>
           </Paper>
         </Grid>
 
         {/* Key Features */}
         <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
+          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" gutterBottom>
               Key Features
             </Typography>
-            <List>
+            <Divider sx={{ my: 2 }}/>
+            <List sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
               <ListItem>
                 <ListItemIcon>
                   <SecurityIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Secure token and liquidity locking" />
+                <ListItemText
+                  primary="Token and Liquidity Locking"
+                  secondary="Lock both tokens and liquidity securely on supported blockchain networks, ensuring transparency and trust among token holders and investors."
+                />
               </ListItem>
               <ListItem>
                 <ListItemIcon>
-                  <InfoIcon color="primary" />
+                  <LanIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Multi-chain support (Ethereum, BNB Smart Chain, Arbitrum, and more)" />
+                <ListItemText
+                  primary="Multi-Chain Support"
+                  secondary="The dApp supports multiple blockchain networks, including Ethereum, BNB Smart Chain, Polygon, Arbitrum, Avalanche, and more, providing flexibility for diverse projects."
+                />
               </ListItem>
               <ListItem>
                 <ListItemIcon>
                   <CodeIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Easy-to-use interface with step-by-step guidance" />
+                <ListItemText
+                  primary="User-Friendly Interface"
+                  secondary="Features a step-by-step guide to simplify the process of locking tokens or liquidity, with real-time feedback and notifications for an enhanced user experience."
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <AccessTimeIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Unlock Flexibility and Transparency"
+                  secondary="View and manage locked assets directly from the dashboard. Tokens can only be withdrawn after the predefined unlock period, reinforcing trust and accountability."
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <WalletIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Seamless Wallet Integration"
+                  secondary="Supports leading wallets like MetaMask and Coinbase Wallet, ensuring secure and effortless connectivity to your wallet for managing assets."
+                />
               </ListItem>
             </List>
           </Paper>
@@ -94,6 +150,7 @@ const LearnMore: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               How It Works
             </Typography>
+            <Divider sx={{ my: 2 }}/>
             <List>
               <ListItem>
                 <ListItemText primary="1. Connect your wallet: Use a supported wallet like MetaMask to connect to the dApp." />
@@ -113,50 +170,81 @@ const LearnMore: React.FC = () => {
 
         {/* Supported Networks */}
         <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              height: '100%', // Ensure the Paper takes full height
+              display: 'flex', // Flexbox for alignment
+              flexDirection: 'column',
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Supported Networks
             </Typography>
-            <Typography>
-              CapsuleGuard is compatible with a wide range of blockchain networks, ensuring flexibility and accessibility
-              for your token and liquidity management needs. Explore our support for popular networks like Ethereum, BNB
-              Smart Chain, Polygon, and more.
-            </Typography>
-            <Box sx={{ my: 2 }}>
-              <Slider
-                width="150px"
-                duration={30}
-                pauseOnHover={true}
-                blurBorders={false}
+            <Divider sx={{ my: 2 }} />
+            <Box 
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between', // Space out elements
+                alignItems: 'center', // Center horizontally
+                height: '100%', // Ensure the Box takes full height
+                overflow: 'hidden', // Prevent content overflow
+                textAlign: 'center', // Center-align the text in Typography
+              }}
+            >
+              <Typography>
+                CapsuleGuard is compatible with a wide range of blockchain networks, ensuring flexibility and accessibility
+                for your token and liquidity management needs.
+                <br />
+                <br />
+                Explore our support for popular networks like Ethereum, BNB
+                Smart Chain, Polygon, and more.
+              </Typography>
+              <Box 
+                sx={{ 
+                  mt: 'auto', // Push to the bottom
+                  width: '100%', 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                }}
               >
-                <Slider.Slide>
-                  <img src={EthLogo} width="80px" alt="Ethereum" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={BNBLogo} width="80px" alt="BNB" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={ArbLogo} width="80px" alt="Arbitrum" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={OpLogo} width="80px" alt="Optimism" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={CronosLogo} width="80px" alt="Cronos" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={PolLogo} width="80px" alt="Polygon" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={AvaxLogo} width="80px" alt="Avalanche" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={coinbaseLogo} width="80px" alt="Base" />
-                </Slider.Slide>
-                <Slider.Slide>
-                  <img src={lineaLogo} width="80px" alt="Linea" />
-                </Slider.Slide>
-              </Slider>
+                <Slider
+                  width="150px"
+                  duration={30}
+                  pauseOnHover={true}
+                  blurBorders={false}
+                >
+                  <Slider.Slide>
+                    <img src={EthLogo} width="80px" alt="Ethereum" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={BNBLogo} width="80px" alt="BNB" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={ArbLogo} width="80px" alt="Arbitrum" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={OpLogo} width="80px" alt="Optimism" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={CronosLogo} width="80px" alt="Cronos" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={PolLogo} width="80px" alt="Polygon" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={AvaxLogo} width="80px" alt="Avalanche" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={coinbaseLogo} width="80px" alt="Base" />
+                  </Slider.Slide>
+                  <Slider.Slide>
+                    <img src={lineaLogo} width="80px" alt="Linea" />
+                  </Slider.Slide>
+                </Slider>
+              </Box>
             </Box>
           </Paper>
         </Grid>
@@ -165,29 +253,30 @@ const LearnMore: React.FC = () => {
         <Grid item xs={12} md={6}>
           <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
             <Typography variant="h6" gutterBottom>
-              Technologies Used
+              Technologies Behind CapsuleGuard
             </Typography>
+            <Divider sx={{ my: 2 }} />
             <Typography>
-              CapsuleGuard leverages the latest blockchain and web technologies to ensure a seamless user experience:
+              CapsuleGuard utilizes advanced blockchain and web technologies to deliver a secure and seamless experience:
             </Typography>
             <List>
               <ListItem>
                 <ListItemIcon>
-                  <CodeIcon color="primary" />
+                  <SecurityIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="React and Material-UI for a modern and responsive user interface" />
+                <ListItemText primary="Secure blockchain integration for trust and transparency" />
               </ListItem>
               <ListItem>
                 <ListItemIcon>
-                  <SecurityIcon color="primary" />
+                  <CodeIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Ethers.js and Web3Modal for blockchain interactions and wallet integration" />
+                <ListItemText primary="User-friendly interface powered by React and Material-UI" />
               </ListItem>
               <ListItem>
                 <ListItemIcon>
                   <InfoIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Framer Motion for smooth animations and user feedback" />
+                <ListItemText primary="Wallet compatibility with MetaMask, Coinbase Wallet, and more" />
               </ListItem>
             </List>
           </Paper>
@@ -199,6 +288,7 @@ const LearnMore: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Use Cases
             </Typography>
+            <Divider sx={{ my: 2 }}/>
             <List>
               <ListItem>
                 <ListItemText primary="1. Token Vesting: Projects can lock tokens for team members or advisors to ensure long-term commitment." />
@@ -218,11 +308,20 @@ const LearnMore: React.FC = () => {
 
         {/* Frequently Asked Questions (FAQs) */}
         <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
+          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" gutterBottom>
               Frequently Asked Questions (FAQs)
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Divider sx={{ my: 2 }}/>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center', // Center vertically
+                alignItems: 'center', // Center horizontally
+                height: '100%', // Ensure it stretches to fill the parent container's height
+              }}
+            >
               {/* Accordion 1 */}
               <Accordion>
                 <AccordionSummary expandIcon={<InfoIcon color="primary" />} aria-controls="faq1-content" id="faq1-header">
@@ -280,6 +379,7 @@ const LearnMore: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Success Stories
             </Typography>
+            <Divider sx={{ my: 2 }}/>
             <Typography>
               <strong>TCA Tokens:</strong> The liquidity pool for TCA Tokens is successfully locked, providing investors with confidence and ensuring long-term stability for the project.
             </Typography>
@@ -295,6 +395,7 @@ const LearnMore: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Additional Information
             </Typography>
+            <Divider sx={{ my: 2 }}/>
             <Typography>
               CapsuleGuard supports a wide range of tokens and chains, making it a versatile tool for developers, project
               owners, and investors. Our platform is continuously evolving to include new features and enhance security.
@@ -318,8 +419,9 @@ const LearnMore: React.FC = () => {
         <Grid item xs={12} sx={{ mb: 4 }}>
           <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center', height: '100%' }}>
             <Typography variant="h6" gutterBottom>
-              Ready to Get Started?
+              Ready to Lock?
             </Typography>
+            <Divider sx={{ my: 2 }}/>
             <Typography sx={{ mb: 2 }}>
               Secure your tokens and liquidity today with CapsuleGuard!
             </Typography>
@@ -327,42 +429,34 @@ const LearnMore: React.FC = () => {
               <button
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: '#07e6f5',
+                  backgroundColor: theme.palette.primary.dark,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontSize: '1rem',
                 }}
-                onClick={() => alert('Get Started Now clicked!')}
-              >
+                onClick={() => navigate("/locker")}
+                >
                 Get Started Now
               </button>
+              <Divider orientation="vertical" flexItem />
+              <w3m-button />
+              <Divider orientation="vertical" flexItem />
               <button
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: Theme.palette.primary.main,
+                  backgroundColor: theme.palette.common.black,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontSize: '1rem',
                 }}
-                onClick={() => alert('Connect Your Wallet clicked!')}
-              >
-                Connect Your Wallet
-              </button>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#333',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                }}
-                onClick={() => alert('Buy TCA clicked!')}
+                onClick={() =>
+                  window.location.href =
+                    "https://pancakeswap.finance/swap?outputCurrency=0x31aab810b51f499340fc1e1b08716d2bc92c7a56&chainId=56"
+                }
               >
                 Buy TCA
               </button>

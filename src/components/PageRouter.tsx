@@ -1,5 +1,4 @@
 import React from "react";
-import { Typography } from "@mui/material";
 import DashboardPage from "../pages/index";
 import LockTokens from "../pages/LockTokens";
 import LockedTokens from "../pages/LockedTokens";
@@ -10,7 +9,7 @@ interface DemoPageContentProps {
 }
 
 const DemoPageContent: React.FC<DemoPageContentProps> = ({ pathname }) => {
-  console.log("Current pathname:", pathname); // Debugging log
+
   if (pathname === "/dashboard" || pathname === "/") return <DashboardPage />;
   if (pathname === "/locker") return <LockTokens />;
   if (pathname === "/locked") return <LockedTokens />;
@@ -20,7 +19,9 @@ const DemoPageContent: React.FC<DemoPageContentProps> = ({ pathname }) => {
     return null; 
   }
   
-  return <Typography>404 - Page Not Found</Typography>;
+  window.location.href = "/dashboard";
+  return null;
+
 };
 
 export default DemoPageContent;

@@ -30,7 +30,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import AdsClickIcon from '@mui/icons-material/AdsClick';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import dayjs, { Dayjs } from 'dayjs';
 import { motion } from "framer-motion";
 import { useNotifications } from '@toolpad/core/useNotifications';
@@ -44,6 +44,7 @@ import AvaxLogo from '../assets/images/walletproviders/Avax.png';
 import coinbaseLogo from '../assets/images/walletproviders/coinbase.png';
 import lineaLogo from '../assets/images/walletproviders/linea.png';
 import CronosLogo from '../assets/images/walletproviders/cronos.png';
+import { Theme } from "../styles/theme";
 
 const steps = [
   { label: "Add Token or Liquidity Address" },
@@ -590,7 +591,7 @@ const LockTokenPage: React.FC = () => {
                     My Wallet Assets
                   </Button>
                   <Dialog open={open} onClose={handleClose}>
-                    <DialogTitle>Enter Token or Liquidity Address</DialogTitle>
+                    <DialogTitle sx={{ textAlign: 'center', borderBottom: 'solid 1px #fff' }}>My Wallet Assets</DialogTitle>
                     <DialogContent>
                     {loading ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '150px' }}>
@@ -602,6 +603,7 @@ const LockTokenPage: React.FC = () => {
                           <ListItem key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <ListItemText
                               primary={`${token.name} (${token.symbol})`}
+                              sx={{ textAlign: 'center' }}
                               secondary={
                                 <Chip 
                                   label={token.address} 
@@ -610,7 +612,8 @@ const LockTokenPage: React.FC = () => {
                                     setLockDetails({ ...lockDetails, tokenAddress: token.address });
                                     handleClose();
                                   }}
-                                  deleteIcon={<AdsClickIcon />}
+                                  deleteIcon={<AddCircleIcon sx={{ color: `${Theme.palette.primary.light} !important` }} />}
+                                  sx={{ mt: 1, width: '100%', justifyContent: 'space-between', borderColor: 'primary.main' }}
                                 />
                               }
                             />
@@ -621,15 +624,8 @@ const LockTokenPage: React.FC = () => {
                       <Typography>No assets found in your wallet.</Typography>
                     )}
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions sx={{ justifyContent: 'center', borderTop: 'solid 1px #fff' }}>
                       <Button onClick={handleClose}>Cancel</Button>
-                      <Button
-                        onClick={() => {
-                          handleClose();
-                        }}
-                      >
-                        Save
-                      </Button>
                     </DialogActions>
                   </Dialog>
                   {open && (
@@ -644,7 +640,7 @@ const LockTokenPage: React.FC = () => {
                   </Divider>
                   <TextField
                     fullWidth
-                    label="Token or Liquidity Address"
+                    label="Paste Token or Liquidity Address"
                     name="tokenAddress"
                     value={lockDetails.tokenAddress}
                     onChange={handleInputChange}
