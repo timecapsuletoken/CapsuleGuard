@@ -30,6 +30,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AdsClickIcon from '@mui/icons-material/AdsClick';
 import dayjs, { Dayjs } from 'dayjs';
 import { motion } from "framer-motion";
 import { useNotifications } from '@toolpad/core/useNotifications';
@@ -601,18 +602,18 @@ const LockTokenPage: React.FC = () => {
                           <ListItem key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <ListItemText
                               primary={`${token.name} (${token.symbol})`}
-                              secondary={`Address: ${token.address}`}
+                              secondary={
+                                <Chip 
+                                  label={token.address} 
+                                  variant="outlined" 
+                                  onDelete={() => {
+                                    setLockDetails({ ...lockDetails, tokenAddress: token.address });
+                                    handleClose();
+                                  }}
+                                  deleteIcon={<AdsClickIcon />}
+                                />
+                              }
                             />
-                            <Button
-                              variant="contained"
-                              size="small"
-                              onClick={() => {
-                                setLockDetails({ ...lockDetails, tokenAddress: token.address });
-                                handleClose();
-                              }}
-                            >
-                              Select
-                            </Button>
                           </ListItem>
                         ))}
                       </List>
