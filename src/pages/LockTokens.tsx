@@ -656,15 +656,23 @@ const LockTokenPage: React.FC = () => {
                   fullWidth
                   label="Amount to Lock"
                   name="amount"
-                  type="number"
+                  type="text" // Use "text" for full control
                   value={lockDetails.amount}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Prevent invalid characters like multiple dots or commas
-                    if (/^\d*\.?\d*$/.test(value)) {
-                      handleInputChange(e);
+                
+                    // Regex to allow only numbers and a single dot for decimals
+                    // - Starts with digits (0-9)
+                    // - Allows one optional dot (.)
+                    // - No thousand separators
+                    // - Handles clearing the input (empty value)
+                    if (/^\d\.\d*$|^\d+$/.test(value) || value === "") {
+                      handleInputChange(e); // Only call when the value matches
                     }
-                  }}                  
+                  }}
+                  inputProps={{
+                    inputMode: "decimal", // Ensures number and decimal point keyboard on mobile
+                  }}                
                 />
               )}
               {activeStep === 2 && (
