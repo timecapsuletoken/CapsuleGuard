@@ -150,8 +150,9 @@ const LockedTokens: React.FC = () => {
       });    
   
       const results = (await Promise.all(promises)).filter(
-        (token) => token.lockedAmount !== "0"
+        (token) => Number(token.lockedAmount) > 0 // Only include tokens with a positive locked amount
       );
+      console.log("Filtered locked tokens:", results); // Log the filtered tokens
       setLockedTokens(results);
     } catch (error) {
       console.error("Error fetching locked tokens:", error);

@@ -21,6 +21,7 @@ import {
   Container,
   CircularProgress,
   Divider,
+  Chip,
 } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -28,6 +29,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import dayjs, { Dayjs } from 'dayjs';
 import { motion } from "framer-motion";
 import { useNotifications } from '@toolpad/core/useNotifications';
@@ -166,6 +168,55 @@ const LockTokenPage: React.FC = () => {
     }
   };
 
+  const checkWalletBalance = async (amount: string): Promise<boolean> => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum as unknown as Eip1193Provider);
+      const signer = await provider.getSigner();
+  
+      if (!address) {
+        console.error("Address is not defined");
+        return false; // Return false if the wallet address is not available
+      }
+  
+      const formatTokenBalance = (balance: bigint, decimals: number): string => {
+        // Convert the balance to a FixedNumber instance
+        const fixedBalance = ethers.FixedNumber.fromValue(balance, decimals);
+  
+        // Format the FixedNumber to the desired decimal places
+        const formattedBalance = fixedBalance.round(decimals).toString();
+  
+        // Remove trailing zeros and the decimal point if not needed
+        return Number(formattedBalance).toLocaleString("de-DE"); // Add dots as thousands separators
+      };
+  
+      if (lockDetails.tokenAddress === 'native') {
+        // Check native token balance (e.g., ETH, BNB)
+        const balance = await provider.getBalance(address); // Fetch balance for the connected wallet
+        console.log("Native Token Balance (Wei):", balance.toString());
+        const formattedBalance = ethers.formatEther(balance); // Convert Wei to Ether
+        console.log("Native Token Balance (Formatted):", formattedBalance);
+        const results = Number(amount) <= Number(formattedBalance);
+        console.log("Check Result (Native):", results);
+        return results;
+      } else {
+        // Check ERC20 token balance
+        const tokenABI = ["function balanceOf(address owner) view returns (uint256)"];
+        const tokenContract = new ethers.Contract(lockDetails.tokenAddress, tokenABI, signer);
+        const balance = await tokenContract.balanceOf(address); // Balance in token's smallest unit
+        console.log("ERC20 Token Balance (Raw):", balance.toString());
+        const decimals = await fetchTokenDecimals(lockDetails.tokenAddress); // Fetch token decimals
+        const formattedBalance = formatTokenBalance(balance, decimals); // Convert to human-readable format
+        console.log("ERC20 Token Balance (Formatted):", formattedBalance);
+        const results = Number(amount) <= Number(formattedBalance);
+        console.log("Check Result (ERC20):", results);
+        return results;
+      }
+    } catch (error) {
+      console.error("Error checking wallet balance:", error);
+      return false;
+    }
+  };  
+  
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -180,6 +231,7 @@ const LockTokenPage: React.FC = () => {
       amount: lockDetails.amount.trim(),
       lockDate: lockDetails.lockDate,
     };
+    const isBalanceSufficient = await checkWalletBalance(lockDetails.amount);
   
     if (activeStep === 0 && (
       !lockDetails.tokenAddress || 
@@ -194,8 +246,8 @@ const LockTokenPage: React.FC = () => {
       return; // Stop progression to the next step
     }
 
-    if (activeStep === 1 && (!lockDetails.amount || lockDetails.amount.trim() === '') || !sanitizedInputs) {
-      notifications.show('Please provide a valid Amount', {
+    if (activeStep === 1 && (!lockDetails.amount || lockDetails.amount.trim() === '') || !sanitizedInputs || !isBalanceSufficient) {
+      notifications.show('Insufficient balance OR Provide a valid Amount', {
         severity: 'warning',
         autoHideDuration: 3000,
       });
@@ -544,8 +596,8 @@ const LockTokenPage: React.FC = () => {
             <Box sx={{ p: 3 }}>
               {activeStep === 0 && (
                 <Box>
-                  <Button variant="outlined" onClick={handleClickOpen}>
-                    Open Token Input
+                  <Button variant="outlined" fullWidth startIcon={<AccountBalanceWalletIcon />} onClick={handleClickOpen}>
+                    My Wallet Assets
                   </Button>
                   <Dialog open={open} onClose={handleClose}>
                     <DialogTitle>Enter Token or Liquidity Address</DialogTitle>
@@ -597,7 +649,9 @@ const LockTokenPage: React.FC = () => {
                       onTokensFetched={handleTokensFetched}
                     />
                   )}
-                  <Divider sx={{ mt: 2 }} />
+                  <Divider sx={{ mt: 2 }}>
+                    <Chip label="OR" size="small" />
+                  </Divider>
                   <TextField
                     fullWidth
                     label="Token or Liquidity Address"
@@ -615,7 +669,13 @@ const LockTokenPage: React.FC = () => {
                   name="amount"
                   type="number"
                   value={lockDetails.amount}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Prevent invalid characters like multiple dots or commas
+                    if (/^\d*\.?\d*$/.test(value)) {
+                      handleInputChange(e);
+                    }
+                  }}                  
                 />
               )}
               {activeStep === 2 && (
@@ -630,9 +690,9 @@ const LockTokenPage: React.FC = () => {
                 />
               )}
               {activeStep === 3 && (
-                <Box sx={{ marginTop: 2 }}>
-                  <Typography variant="subtitle2" color="primary">
-                    Note: A $5 fee will be charged in TCA before locking tokens.
+                <Box sx={{ marginTop: 2, textAlign: 'center' }}>
+                  <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
+                    Note: A $5 USDC fee will be charged before locking tokens.
                   </Typography>
                   {approving ? (
                     <>
@@ -658,7 +718,7 @@ const LockTokenPage: React.FC = () => {
               )}
 
               {activeStep === 5 && (
-                <Typography variant="h6" color="success.main">
+                <Typography variant="h6" color="success.main" sx={{ textAlign: "center" }}>
                   Token locked successfully!
                 </Typography>
               )}
