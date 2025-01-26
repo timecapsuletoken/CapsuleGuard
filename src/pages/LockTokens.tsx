@@ -92,26 +92,31 @@ const LockTokenPage: React.FC = () => {
   };
 
    // Use an effect to show the notification
-   React.useEffect(() => {
-    if (!isConnected && !notificationShownRef.current) {
-      notifications.show('You must Connect a wallet first', {
-        severity: 'warning',
-        autoHideDuration: 3000,
-      });
-      notificationShownRef.current = true; 
-      navigate("/dashboard")
-    }
+    React.useEffect(() => {
+      const timer = setTimeout(() => {
+        if (!isConnected && !notificationShownRef.current) {
+          notifications.show('You must Connect a wallet first', {
+            severity: 'warning',
+            autoHideDuration: 3000,
+          });
+          notificationShownRef.current = true; 
+          navigate("/dashboard");
+        }
+      }, 2000); // 2-second delay
 
-    // Reset the ref when connected
-    if (isConnected) {
-      notificationShownRef.current = false;
-    }
-  }, [isConnected, notifications, navigate]);
+      // Reset the ref when connected
+      if (isConnected) {
+        notificationShownRef.current = false;
+        clearTimeout(timer); // Clear the timer if the wallet connects
+      }
 
-  // Return early if not connected
-  if (!isConnected) {
-    return null; // Render nothing if not connected
-  }
+      return () => clearTimeout(timer); // Cleanup the timer on unmount
+    }, [isConnected, notifications, navigate]);
+
+    // Return early if not connected
+    if (!isConnected) {
+      return null; // Render nothing if not connected
+    }
 
 /*
   const USDC_ADDRESSES: { [key: number]: string } = {
@@ -555,7 +560,7 @@ const LockTokenPage: React.FC = () => {
                           <ListItem key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <ListItemText
                               primary={`${token.name} (${token.symbol})`}
-                              secondary={`Balance: ${token.balance}`}
+                              secondary={`Address: ${token.address}`}
                             />
                             <Button
                               variant="contained"

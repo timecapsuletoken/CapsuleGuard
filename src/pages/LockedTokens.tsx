@@ -100,18 +100,21 @@ const LockedTokens: React.FC = () => {
 
   const fetchLockedTokens = async () => {
     if (!address || !provider) {
-      if (!notificationShownRef.current) {
-        notifications.show("Wallet not connected or provider unavailable", {
-          severity: "info",
-          autoHideDuration: 3000,
-        });
-        notificationShownRef.current = true; // Mark notification as shown
-      }
-      return;
+      const timer = setTimeout(() => {
+        if (!notificationShownRef.current) {
+          notifications.show("Wallet not connected or provider unavailable", {
+            severity: "info",
+            autoHideDuration: 3000,
+          });
+          notificationShownRef.current = true; // Mark notification as shown
+        }
+      }, 2000); // 2-second delay
+    
+      return () => clearTimeout(timer); // Cleanup the timer if the component unmounts or address/provider changes
     }
-  
+    
     notificationShownRef.current = false; // Reset notification state when connected
-
+    
     setLoading(true);
   
     try {
