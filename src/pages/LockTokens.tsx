@@ -177,18 +177,7 @@ const LockTokenPage: React.FC = () => {
         console.error("Address is not defined");
         return false; // Return false if the wallet address is not available
       }
-  
-      const formatTokenBalance = (balance: bigint, decimals: number): string => {
-        // Convert the balance to a FixedNumber instance
-        const fixedBalance = ethers.FixedNumber.fromValue(balance, decimals);
-  
-        // Format the FixedNumber to the desired decimal places
-        const formattedBalance = fixedBalance.round(decimals).toString();
-  
-        // Remove trailing zeros and the decimal point if not needed
-        return Number(formattedBalance).toLocaleString("de-DE"); // Add dots as thousands separators
-      };
-  
+
       if (lockDetails.tokenAddress === 'native') {
         // Check native token balance (e.g., ETH, BNB)
         const balance = await provider.getBalance(address); // Fetch balance for the connected wallet
@@ -205,17 +194,17 @@ const LockTokenPage: React.FC = () => {
         const balance = await tokenContract.balanceOf(address); // Balance in token's smallest unit
         console.log("ERC20 Token Balance (Raw):", balance.toString());
         const decimals = await fetchTokenDecimals(lockDetails.tokenAddress); // Fetch token decimals
-        const formattedBalance = formatTokenBalance(balance, decimals); // Convert to human-readable format
+        const formattedBalance = ethers.formatUnits(balance, decimals); // Convert to human-readable format
         console.log("ERC20 Token Balance (Formatted):", formattedBalance);
         const results = Number(amount) <= Number(formattedBalance);
         console.log("Check Result (ERC20):", results);
-        return results;
+        return results;  
       }
     } catch (error) {
       console.error("Error checking wallet balance:", error);
       return false;
     }
-  };  
+  };
   
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
