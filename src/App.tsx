@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ethers } from "ethers";
 import { Box, Stack, Avatar, Typography, Chip, Link } from '@mui/material';
 import { Theme } from "./styles/theme"; 
-import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon, Help as HelpIcon } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon, Help as HelpIcon, PsychologyAlt as PsychologyAltIcon } from '@mui/icons-material';
 import CGLogo from './assets/images/logos/logo.png';
 import { FaDiscord } from "react-icons/fa";
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
@@ -43,6 +43,14 @@ const NAVIGATION: Navigation = [
     segment: 'locked',
     title: 'Locked Tokens',
     icon: <LockOpenIcon />,
+  },
+  {
+    kind: 'divider',
+  },
+  {
+    segment: 'HowToUse',
+    title: 'How To Use',
+    icon: <PsychologyAltIcon />,
   },
   {
     kind: 'divider',
@@ -203,9 +211,17 @@ function SidebarFooter({ mini }: SidebarFooterProps) {
       <w3m-button />
       <Typography
         variant="caption"
-        sx={{ m: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}
+        sx={{ my: 2, whiteSpace: 'nowrap', overflow: 'hidden' }}
       >
-        {mini ? '© $TCA' : `CapsuleGuard © ${new Date().getFullYear()} dApp by $TCA`}
+      {mini ? (
+        '© $TCA'
+      ) : (
+        <>
+        <Link href="https://www.timecapsuletoken.com" target="_blank" underline="hover">
+          CapsuleGuard dApp © {new Date().getFullYear()}
+        </Link>
+        </>
+      )}
       </Typography>
     </Box>
   );

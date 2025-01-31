@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { ethers } from "ethers";
 import { useWallet } from "../App"; // Import wallet context
+import { RouterContext } from "../App";
 import { CONTRACT_ADDRESS } from "../config";
 import {
   Box,
   Stack,
   Divider,
   Typography,
+  Chip,
   CircularProgress,
   Table,
   TableBody,
@@ -72,12 +74,13 @@ type LockedToken = {
 };
 
 const LockedTokens: React.FC = () => {
-  const { address, provider, explorerUrl, ChainIcon } = useWallet(); // Access wallet context
+  const { address, isConnected, provider, explorerUrl, ChainIcon } = useWallet(); // Access wallet context
   const [lockedTokens, setLockedTokens] = useState<LockedToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
   const notifications = useNotifications();
   const notificationShownRef = useRef(false); // Ref to prevent duplicate notifications
+  const { navigate } = useContext(RouterContext);
 
   const contractAddress = CONTRACT_ADDRESS;
   const contractABI = [
@@ -100,21 +103,9 @@ const LockedTokens: React.FC = () => {
 
   const fetchLockedTokens = async () => {
     if (!address || !provider) {
-      const timer = setTimeout(() => {
-        if (!notificationShownRef.current) {
-          notifications.show("Wallet not connected or provider unavailable", {
-            severity: "info",
-            autoHideDuration: 3000,
-          });
-          notificationShownRef.current = true; // Mark notification as shown
-        }
-      }, 2000); // 2-second delay
-    
-      return () => clearTimeout(timer); // Cleanup the timer if the component unmounts or address/provider changes
+      return ; 
     }
-    
-    notificationShownRef.current = false; // Reset notification state when connected
-    
+        
     setLoading(true);
   
     try {
@@ -167,11 +158,6 @@ const LockedTokens: React.FC = () => {
 
   const handleWithdraw = async (tokenAddress: string) => {
     if (!address || !provider) {
-      console.log("Wallet not connected or provider unavailable");
-      notifications.show("Wallet not connected or provider unavailable", {
-        severity: 'info',
-        autoHideDuration: 3000,
-      });
       return;
     }
 
@@ -216,7 +202,34 @@ const LockedTokens: React.FC = () => {
 
   useEffect(() => {
     fetchLockedTokens();
-  }, [address, provider]);
+  }, []);
+
+  // Use an effect to show the notification
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isConnected && !notificationShownRef.current) {
+        notifications.show('You must Connect a wallet first', {
+          severity: 'warning',
+          autoHideDuration: 3000,
+        });
+        notificationShownRef.current = true; 
+        navigate("/dashboard");
+      }
+    }, 2000); // 2-second delay
+
+    // Reset the ref when connected
+    if (isConnected) {
+      notificationShownRef.current = false;
+      clearTimeout(timer); // Clear the timer if the wallet connects
+    }
+
+    return () => clearTimeout(timer); // Cleanup the timer on unmount
+  }, [isConnected, notifications, navigate]);
+
+  // Return early if not connected
+  if (!isConnected) {
+    return null; // Render nothing if not connected
+  }
 
   return (
     <Box sx={{ padding: 3, width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -241,7 +254,7 @@ const LockedTokens: React.FC = () => {
             <Box sx={{ width: '100%' }}>
               <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
                 <Grid display="flex" justifyContent="center" alignItems="center" size={12}>
-                  <Typography sx={{ color: Theme.typography.h2 }}>No locked tokens found.</Typography>
+                  <Chip label="No locked tokens found" variant="outlined" />
                 </Grid>
                 <Divider orientation="vertical" flexItem />
                 <Grid display="flex" justifyContent="center" alignItems="center" size={12}>

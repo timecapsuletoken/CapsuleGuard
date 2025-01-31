@@ -106,7 +106,7 @@ const LockTokenPage: React.FC = () => {
           notificationShownRef.current = true; 
           navigate("/dashboard");
         }
-      }, 2000); // 2-second delay
+      }, 1000); // 2-second delay
 
       // Reset the ref when connected
       if (isConnected) {
@@ -468,17 +468,16 @@ const LockTokenPage: React.FC = () => {
     },
   };
   
-  const wiggleVariants = {
-    wiggle: {
-      x: [0, 5, -5, 0], // Wiggles side-to-side
-      y: [0, -5, 5, 0], // Wiggles up and down
+  const shakeVariants = {
+    shake: {
+      x: [0, -8, 8, -6, 6, -4, 4, 0], // Gradual horizontal shake
       transition: {
-        duration: 6, // Slower wiggle animation
-        repeat: Infinity,
+        duration: 4, // Adjust duration for faster or slower shake
+        repeat: Infinity, // Repeat indefinitely
         ease: "easeInOut",
       },
     },
-  };
+  };  
   
   const floatingShapes = [
     { src: EthLogo, alt: "Shape 1", top: "5%", left: "10%" },
@@ -530,31 +529,32 @@ const LockTokenPage: React.FC = () => {
           />
           {/* Floating Shapes */}
           <Box>
-          {floatingShapes.map((shape, index) => (
-            <motion.div
-              key={index}
-              initial="float"
-              animate="float"
-              variants={floatingVariants}
-              style={{
-                position: "absolute",
-                top: shape.top,
-                left: shape.left,
-                width: '5vw',
-                height: 'auto',
-              }}
-            >
-              <motion.img
-                src={shape.src}
-                alt={shape.alt}
-                style={{ width: "100%", height: "100%" }}
-                variants={wiggleVariants}
-                animate="wiggle"
-              />
-            </motion.div>
-          ))}
+            {floatingShapes.map((shape, index) => (
+              <motion.div
+                key={index}
+                variants={floatingVariants} // Floating up and down + rotation
+                animate="float"
+                style={{
+                  position: "absolute",
+                  top: shape.top,
+                  left: shape.left,
+                  width: "5vw",
+                  height: "auto",
+                }}
+              >
+                <motion.img
+                  src={shape.src}
+                  alt={shape.alt}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  variants={shakeVariants} 
+                  animate="shake"
+                />
+              </motion.div>
+            ))}
           </Box>
-
           <Box 
             sx={{
               display: 'flex',

@@ -44,7 +44,7 @@ const CapsuleGuardHero: React.FC = () => {
 
       {/* Main Content */}
       <HeroContent maxWidth="md">
-        <Typography variant="h2" color="text.primary" sx={{ width: '30%' }} gutterBottom>
+        <Typography variant="h1" color="text.primary" sx={{ width: '40%', fontSize: '50px' }} gutterBottom>
           Welcome to <strong>Capsule Guard</strong>
         </Typography>
         <Box sx={{ width: '50%', height: 'auto', mb: '10px' }}>

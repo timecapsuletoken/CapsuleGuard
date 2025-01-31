@@ -3,6 +3,7 @@ import DashboardPage from "../pages/index";
 import LockTokens from "../pages/LockTokens";
 import LockedTokens from "../pages/LockedTokens";
 import LearnMore from "../pages/LearnMore";
+import HowToUse from "../pages/HowToUse";
 
 interface DemoPageContentProps {
   pathname: string;
@@ -18,6 +19,7 @@ const DemoPageContent: React.FC<DemoPageContentProps> = ({ pathname }) => {
     window.location.href = "https://discord.com/channels/1231742452453478400/1231744999419281438";
     return null; 
   }
+  if (pathname === "/HowToUse") return <HowToUse />;
   
   window.location.href = "/dashboard";
   return null;
