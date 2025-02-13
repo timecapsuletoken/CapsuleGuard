@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { ethers } from "ethers";
 import { useWallet } from "../App"; // Import wallet context
 import { RouterContext } from "../App";
-import { CONTRACT_ADDRESS } from "../config";
+import { CONTRACT_ADDRESSES } from "../config";
 import {
   Box,
   Stack,
@@ -74,7 +74,7 @@ type LockedToken = {
 };
 
 const LockedTokens: React.FC = () => {
-  const { address, isConnected, provider, explorerUrl, ChainIcon } = useWallet(); // Access wallet context
+  const { address, isConnected, chainId, provider, explorerUrl, ChainIcon } = useWallet(); // Access wallet context
   const [lockedTokens, setLockedTokens] = useState<LockedToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
@@ -82,7 +82,7 @@ const LockedTokens: React.FC = () => {
   const notificationShownRef = useRef(false); // Ref to prevent duplicate notifications
   const { navigate } = useContext(RouterContext);
 
-  const contractAddress = CONTRACT_ADDRESS;
+  const contractAddress = CONTRACT_ADDRESSES[chainId ?? 0];
   const contractABI = [
     "function getUserTokens(address user) external view returns (address[])",
     "function getLockDetails(address lockerAddress, address tokenAddress) external view returns (uint256 lockedAmount, uint256 unlockTime)",

@@ -9,6 +9,6 @@ contract TestToken is ERC20 {
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return 6; // Simulates USDC's decimals
+        return 6; // Simulates USDC's decimals, Supply 1000000000000 for 1 million Tokens
     }
 }

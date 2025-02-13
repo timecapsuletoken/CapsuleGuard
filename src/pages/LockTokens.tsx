@@ -2,7 +2,7 @@ import { Eip1193Provider, ethers } from "ethers";
 import React, { useState, useContext } from 'react';
 import { RouterContext } from "../App";
 import { useWallet } from "../App";
-import { CONTRACT_ADDRESS } from "../config";
+import { CONTRACT_ADDRESSES } from "../config";
 import { TokenFetcher, TokenDetails } from '../components/TokenFetcher'; // Ensure you import the TokenDetails type
 import {
   Box,
@@ -63,7 +63,7 @@ interface LockDetails {
 
 const LockTokenPage: React.FC = () => {
   const theme = useTheme();
-  const { address, isConnected } = useWallet();
+  const { address, isConnected, chainId } = useWallet();
   const { navigate } = useContext(RouterContext);
   const notifications = useNotifications();
   const notificationShownRef = React.useRef(false); // Ref to track if notification has been shown
@@ -80,6 +80,7 @@ const LockTokenPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [tokens, setTokens] = useState<TokenDetails[]>([]);
   const [loading, setLoading] = useState(false);
+  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId ?? 0];
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -565,7 +566,7 @@ const LockTokenPage: React.FC = () => {
             }}
           >
             <Typography variant="h4" align="center" gutterBottom>
-              Lock Token or Liquidity
+              Lock Token or Liquidity | Chain ID: {chainId} Contract: {CONTRACT_ADDRESS}
             </Typography>
             <Paper
               square
