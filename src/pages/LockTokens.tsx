@@ -33,7 +33,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import dayjs, { Dayjs } from 'dayjs';
 import { motion } from "framer-motion";
-import { useNotifications } from '@toolpad/core/useNotifications';
+import { notify } from "../utils/toast";
 
 import EthLogo from '../assets/images/walletproviders/ethereum.png';
 import ArbLogo from '../assets/images/walletproviders/arbitrum.png';
@@ -65,7 +65,6 @@ const LockTokenPage: React.FC = () => {
   const theme = useTheme();
   const { address, isConnected, chainId } = useWallet();
   const { navigate } = useContext(RouterContext);
-  const notifications = useNotifications();
   const notificationShownRef = React.useRef(false); // Ref to track if notification has been shown
   const now = dayjs(); // Current date as a Dayjs object
   const [activeStep, setActiveStep] = useState(0);
@@ -100,9 +99,8 @@ const LockTokenPage: React.FC = () => {
     React.useEffect(() => {
       const timer = setTimeout(() => {
         if (!isConnected && !notificationShownRef.current) {
-          notifications.show('You must Connect a wallet first', {
-            severity: 'warning',
-            autoHideDuration: 3000,
+          notify.warning('You must Connect a wallet first', {
+            autoClose: 3000,
           });
           notificationShownRef.current = true; 
           navigate("/dashboard");
@@ -116,7 +114,7 @@ const LockTokenPage: React.FC = () => {
       }
 
       return () => clearTimeout(timer); // Cleanup the timer on unmount
-    }, [isConnected, notifications, navigate]);
+    }, [isConnected, navigate]);
 
     // Return early if not connected
     if (!isConnected) {
@@ -231,25 +229,22 @@ const LockTokenPage: React.FC = () => {
       (!ethers.isAddress(lockDetails.tokenAddress.trim()) && lockDetails.tokenAddress !== 'native') || 
       !sanitizedInputs 
     ) {
-      notifications.show('Please provide a valid Token or Liquidity Address', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('Please provide a valid Token or Liquidity Address', {
+        autoClose: 3000,
       });
       return; // Stop progression to the next step
     }
 
     if (activeStep === 1 && (!lockDetails.amount || lockDetails.amount.trim() === '') || !sanitizedInputs || !isBalanceSufficient) {
-      notifications.show('Insufficient balance OR Provide a valid Amount', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('Insufficient balance OR Provide a valid Amount', {
+        autoClose: 3000,
       });
       return; // Stop progression to the next step
     }
 
     if (activeStep === 2 && (!lockDetails.lockDate || lockDetails.lockDate.isBefore(now, 'day') || !lockDetails.lockDate.isAfter(now)) || !sanitizedInputs) {
-      notifications.show('The lock date must be in the future', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('The lock date must be in the future', {
+        autoClose: 3000,
       });
       return; // Stop progression to the next step
     }
@@ -274,9 +269,8 @@ const LockTokenPage: React.FC = () => {
       !lockDetails.amount || 
       !lockDetails.lockDate
     ) {
-      notifications.show('Please complete all required fields!', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('Please complete all required fields!', {
+        autoClose: 3000,
       });
       return;
     }
@@ -303,9 +297,8 @@ const LockTokenPage: React.FC = () => {
           const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
           await approveFeeTx.wait();
         
-          notifications.show('USDC fee approved successfully for native tokens.', {
-            severity: 'success',
-            autoHideDuration: 3000,
+          notify.success('USDC fee approved successfully for native tokens.', {
+            autoClose: 3000,
           });
         
           setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
@@ -323,9 +316,8 @@ const LockTokenPage: React.FC = () => {
           const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, totalApproval);
           await approveTx.wait();
   
-          notifications.show('USDC lock and fees approved successfully!', {
-            severity: 'success',
-            autoHideDuration: 3000,
+          notify.success('USDC lock and fees approved successfully!', {
+            autoClose: 3000,
           });
           setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
           break;
@@ -347,9 +339,8 @@ const LockTokenPage: React.FC = () => {
           const approveFeeTx = await usdcContract.approve(CONTRACT_ADDRESS, feeInUSDC);
           await approveFeeTx.wait();
   
-          notifications.show('Tokens and fees approved successfully!', {
-            severity: 'success',
-            autoHideDuration: 3000,
+          notify.success('Tokens and fees approved successfully!', {
+            autoClose: 3000,
           });
           setActiveStep((prevActiveStep) => prevActiveStep + 1); // Move to the next step
           break;
@@ -358,9 +349,8 @@ const LockTokenPage: React.FC = () => {
   
     } catch (error) {
       console.error("Error approving tokens or fees:", error);
-      notifications.show('Failed to approve tokens or fees', {
-        severity: 'error',
-        autoHideDuration: 3000,
+      notify.error('Failed to approve tokens or fees', {
+        autoClose: 3000,
       });
     } finally {
       setApproving(false);
@@ -373,8 +363,8 @@ const LockTokenPage: React.FC = () => {
       !lockDetails.tokenAddress || 
       (lockDetails.tokenAddress !== 'native' && lockDetails.tokenAddress.trim() === '')
     ) {
-      notifications.show('Please provide a valid Token or Liquidity Address!', {
-        autoHideDuration: 3000,
+      notify.warning('Please provide a valid Token or Liquidity Address!', {
+        autoClose: 3000,
       });
     }
 
@@ -384,9 +374,8 @@ const LockTokenPage: React.FC = () => {
       !lockDetails.amount || 
       !lockDetails.lockDate
     ) {
-      notifications.show('Please complete all required fields!', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('Please complete all required fields!', {
+        autoClose: 3000,
       });
       return;
     }
@@ -411,9 +400,8 @@ const LockTokenPage: React.FC = () => {
         });
         await lockTx.wait();
       
-        notifications.show('Native tokens locked and fees collected successfully', {
-          severity: 'success',
-          autoHideDuration: 3000,
+        notify.success('Native tokens locked and fees collected successfully', {
+          autoClose: 3000,
         });
       } else {
         // Lock ERC20 tokens
@@ -437,9 +425,8 @@ const LockTokenPage: React.FC = () => {
           unlockTime
         );
         await lockTx.wait();
-        notifications.show('ERC20 tokens locked successfully', {
-          severity: 'success',
-          autoHideDuration: 3000,
+        notify.success('ERC20 tokens locked successfully', {
+          autoClose: 3000,
         });
       }
 
@@ -448,9 +435,8 @@ const LockTokenPage: React.FC = () => {
         if (error instanceof Error) {
           console.error("Error message:", error.message);
         }      
-      notifications.show('Failed to lock tokens', {
-        severity: 'error',
-        autoHideDuration: 3000,
+      notify.error('Failed to lock tokens', {
+        autoClose: 3000,
       });
     } finally {
       setLocking(false);

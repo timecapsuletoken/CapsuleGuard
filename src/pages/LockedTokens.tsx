@@ -24,7 +24,7 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/material/styles';
 import { Theme } from "../styles/theme"; // Adjust the path as necessary
-import { useNotifications } from '@toolpad/core/useNotifications';
+import { notify } from "../utils/toast";
 
 import Lottie from 'lottie-react';
 import KeyIcon from '@mui/icons-material/Key';
@@ -78,7 +78,6 @@ const LockedTokens: React.FC = () => {
   const [lockedTokens, setLockedTokens] = useState<LockedToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null); // Track the withdrawing token
-  const notifications = useNotifications();
   const notificationShownRef = useRef(false); // Ref to prevent duplicate notifications
   const { navigate } = useContext(RouterContext);
 
@@ -117,10 +116,6 @@ const LockedTokens: React.FC = () => {
   
       if (tokenAddresses.length === 0) {
         console.log("No locked tokens found for this wallet.");
-        notifications.show("No locked tokens found for this wallet", {
-          severity: 'info',
-          autoHideDuration: 3000,
-        });
         setLockedTokens([]);
         return;
       }
@@ -147,9 +142,8 @@ const LockedTokens: React.FC = () => {
       setLockedTokens(results);
     } catch (error) {
       console.error("Error fetching locked tokens:", error);
-      notifications.show('Failed to fetch locked tokens', {
-        severity: 'warning',
-        autoHideDuration: 3000,
+      notify.warning('Failed to fetch locked tokens', {
+        autoClose: 3000,
       });
     } finally {
       setLoading(false);
@@ -173,27 +167,24 @@ const LockedTokens: React.FC = () => {
         const tx = await contract.withdrawNativeTokens();
         await tx.wait();
   
-        notifications.show("Native tokens successfully withdrawn!", {
-          severity: 'success',
-          autoHideDuration: 3000,
+        notify.success("Native tokens successfully withdrawn!", {
+          autoClose: 3000,
         });
       } else {
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
         const tx = await contract.withdrawTokens(tokenAddress);
         await tx.wait();
   
-        notifications.show(`Tokens successfully withdrawn for token: ${tokenAddress}`, {
-          severity: 'success',
-          autoHideDuration: 3000,
+        notify.success(`Tokens successfully withdrawn for token: ${tokenAddress}`, {
+          autoClose: 3000,
         });
       }
   
       fetchLockedTokens(); // Refresh data after withdrawal
     } catch (error) {
       console.error("Error withdrawing tokens:", error);
-      notifications.show("Failed to withdraw tokens", {
-        severity: 'error',
-        autoHideDuration: 3000,
+      notify.error("Failed to withdraw tokens", {
+        autoClose: 3000,
       });
     } finally {
       setWithdrawing(null);
@@ -201,34 +192,62 @@ const LockedTokens: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLockedTokens();
-  }, []);
+    if (isConnected && address) {
+      fetchLockedTokens();
+    }
+  }, [isConnected, address, chainId]);
 
-  // Use an effect to show the notification
+  // Check if wallet is connected
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isConnected && !notificationShownRef.current) {
-        notifications.show('You must Connect a wallet first', {
-          severity: 'warning',
-          autoHideDuration: 3000,
+        notify.warning('You must Connect a wallet first', {
+          autoClose: 3000,
         });
         notificationShownRef.current = true; 
-        navigate("/dashboard");
+        navigate('/');
       }
-    }, 2000); // 2-second delay
+    }, 2000);
 
     // Reset the ref when connected
     if (isConnected) {
       notificationShownRef.current = false;
-      clearTimeout(timer); // Clear the timer if the wallet connects
     }
 
     return () => clearTimeout(timer); // Cleanup the timer on unmount
-  }, [isConnected, notifications, navigate]);
+  }, [isConnected, navigate]);
 
   // Return early if not connected
   if (!isConnected) {
-    return null; // Render nothing if not connected
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center',
+        height: '100%',
+        p: 3
+      }}>
+        <Lottie 
+          animationData={animationData} 
+          style={{ width: 200, height: 200 }} 
+        />
+        <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+          Please connect your wallet to view locked tokens
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => {
+            notify.info('Please connect your wallet using the button in the top right', {
+              autoClose: 3000,
+            });
+          }}
+          sx={{ mt: 2 }}
+        >
+          Connect Wallet
+        </Button>
+      </Box>
+    );
   }
 
   return (

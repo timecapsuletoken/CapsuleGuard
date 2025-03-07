@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ethers } from "ethers";
 import { Box, Stack, Avatar, Typography, Chip, Link } from '@mui/material';
 import { Theme } from "./styles/theme"; 
-import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon, Help as HelpIcon, PsychologyAlt as PsychologyAltIcon } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, LockClock as LockClockIcon, LockOpen as LockOpenIcon, Help as HelpIcon, PsychologyAlt as PsychologyAltIcon, Settings as SettingsIcon } from '@mui/icons-material';
 import CGLogo from './assets/images/logos/logo.png';
 import { FaDiscord } from "react-icons/fa";
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
@@ -11,6 +11,7 @@ import PageRouter from './components/PageRouter';
 import { useDemoRouter } from '@toolpad/core/internal';
 import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider  } from 'web3modal-web3js/react';
 import { PROJECT_ID } from "./config";
+import { useEffect, useMemo } from 'react';
 
 import EthLogo from './assets/images/walletproviders/ethereum.png';
 import ArbLogo from './assets/images/walletproviders/arbitrum.png';
@@ -21,54 +22,15 @@ import AvaxLogo from './assets/images/walletproviders/Avax.png';
 import coinbaseLogo from './assets/images/walletproviders/coinbase.png';
 import lineaLogo from './assets/images/walletproviders/linea.png';
 import CronosLogo from './assets/images/walletproviders/cronos.png';
+import SolanaLogo from './assets/images/walletproviders/solana.png';
+import { SiSolana, SiEthereum } from "react-icons/si";
 
-const NAVIGATION: Navigation = [
-  {
-    segment: 'dashboard',
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    segment: 'locker',
-    title: 'Locker',
-    icon: <LockClockIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    segment: 'locked',
-    title: 'Locked Tokens',
-    icon: <LockOpenIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    segment: 'HowToUse',
-    title: 'How To Use',
-    icon: <PsychologyAltIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    segment: 'LearnMore',
-    title: 'Learn More',
-    icon: <HelpIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    segment: "Support",
-    title: "Support",
-    icon: <FaDiscord style={{ fontSize: "24px", color: "inherit" }} />, 
-  },
-];
+// Import Solana wallet adapter
+import { useWallet as useSolanaWallet, WalletContextState } from '@solana/wallet-adapter-react';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { SolanaWalletProvider } from './components/SolanaWalletProvider';
+import WalletConnectButton from './components/WalletConnectButton';
 
 // Web3Modal Configuration
 const projectId = PROJECT_ID || "";
@@ -170,11 +132,19 @@ const chains = [
     rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
   },
   {
-    chainId: 8453,
+    chainId: 8453, 
     name: 'Base',
     currency: 'ETH',
     ChainIcon: coinbaseLogo,
     explorerUrl: 'https://basescan.org',
+    rpcUrl: 'https://mainnet.base.org',
+  },
+  {
+    chainId: 84532, 
+    name: 'Base Sepolia',
+    currency: 'ETH',
+    ChainIcon: coinbaseLogo,
+    explorerUrl: 'https://sepolia.basescan.org',
     rpcUrl: 'https://mainnet.base.org',
   },
   {
@@ -240,7 +210,7 @@ function SidebarFooter({ mini }: SidebarFooterProps) {
         justifyItems: 'center',
       }}
     >
-      <w3m-button />
+      <WalletConnectButton />
       <Typography
         variant="caption"
         sx={{ my: 2, whiteSpace: 'nowrap', overflow: 'hidden' }}
@@ -250,7 +220,7 @@ function SidebarFooter({ mini }: SidebarFooterProps) {
       ) : (
         <>
         <Link href="https://www.timecapsuletoken.com" target="_blank" underline="hover">
-          CapsuleGuard dApp © {new Date().getFullYear()}
+          © 2024 TimeCapsule Token
         </Link>
         </>
       )}
@@ -289,7 +259,14 @@ const WalletContext = React.createContext<{
   provider: ethers.BrowserProvider | null;
   chainId: number | undefined;
   explorerUrl?: string;
-  ChainIcon?: string; // Add explorerUrl here
+  ChainIcon?: string;
+  solanaAddress?: string;
+  isSolanaConnected: boolean;
+  solanaNetwork?: string;
+  solanaBalance?: number;
+  connectSolanaWallet: (walletName: string) => Promise<boolean>;
+  disconnectWallet: () => void;
+  disconnectSolanaWallet: () => void;
 }>({
   address: undefined,
   isConnected: false,
@@ -297,28 +274,98 @@ const WalletContext = React.createContext<{
   chainId: undefined,
   explorerUrl: undefined,
   ChainIcon: undefined,
+  solanaAddress: undefined,
+  isSolanaConnected: false,
+  solanaNetwork: undefined,
+  solanaBalance: undefined,
+  connectSolanaWallet: async () => false,
+  disconnectWallet: () => {},
+  disconnectSolanaWallet: () => {},
 });
 
 export const useWallet = () => {
-  const context = React.useContext(WalletContext);
+  const { address, isConnected, chainId } = useWeb3ModalAccount();
+  const web3ModalProvider = useWeb3ModalProvider();
+  const solanaWallet = useSolanaWallet();
+  const isSolanaConnected = solanaWallet.connected;
+  const solanaAddress = solanaWallet.publicKey?.toString();
+  
+  // Get Solana network information
+  const solanaNetwork = useMemo(() => {
+    // Default to mainnet
+    return WalletAdapterNetwork.Devnet;
+  }, []);
 
-  if (!context) {
-    throw new Error("useWallet must be used within a WalletContext.Provider");
-  }
+  // Get provider for Ethereum
+  const provider = useMemo(() => {
+    if (isConnected && web3ModalProvider.walletProvider) {
+      try {
+        return new ethers.BrowserProvider(web3ModalProvider.walletProvider);
+      } catch (error) {
+        console.error('Error creating Ethereum provider:', error);
+        return null;
+      }
+    }
+    return null;
+  }, [isConnected, web3ModalProvider.walletProvider]);
 
-  const explorerUrl = React.useMemo(() => {
-    if (!context.chainId) return undefined;
-    const chain = chains.find((c) => c.chainId === context.chainId);
-    return chain?.explorerUrl; // Use `explorerUrl` here
-  }, [context.chainId]);
+  // Get explorer URL based on chainId
+  const explorerUrl = useMemo(() => {
+    if (!chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === chainId);
+    return chain?.explorerUrl;
+  }, [chainId]);
 
-  const ChainIcon = React.useMemo(() => {
-    if (!context.chainId) return undefined;
-    const chain = chains.find((c) => c.chainId === context.chainId);
+  // Get chain icon based on chainId
+  const ChainIcon = useMemo(() => {
+    if (!chainId) return undefined;
+    const chain = chains.find((c) => c.chainId === chainId);
     return chain?.ChainIcon;
-  }, [context.chainId]);
+  }, [chainId]);
 
-  return { ...context, explorerUrl, ChainIcon };
+  useEffect(() => {
+    if (solanaWallet.connected) {
+      console.log('Solana wallet connected:', solanaWallet.publicKey?.toString());
+    }
+  }, [solanaWallet.connected, solanaWallet.publicKey]);
+
+  const disconnectWallet = () => {
+    if (isConnected && web3ModalProvider.walletProvider) {
+      try {
+        // Use the web3Modal to disconnect
+        console.log('Disconnecting Ethereum wallet');
+      } catch (error) {
+        console.error('Error disconnecting Ethereum wallet:', error);
+      }
+    }
+  };
+
+  const disconnectSolanaWallet = () => {
+    if (solanaWallet.connected && solanaWallet.disconnect) {
+      try {
+        solanaWallet.disconnect();
+        console.log('Solana wallet disconnected successfully');
+      } catch (error) {
+        console.error('Error disconnecting Solana wallet:', error);
+      }
+    } else {
+      console.log('No Solana wallet connected or disconnect method not available');
+    }
+  };
+
+  return {
+    address,
+    isConnected,
+    chainId,
+    provider,
+    explorerUrl,
+    ChainIcon,
+    isSolanaConnected,
+    solanaAddress,
+    solanaNetwork,
+    disconnectWallet,
+    disconnectSolanaWallet
+  };
 };
 
 export default function App(props: DemoProps) {
@@ -334,25 +381,86 @@ export default function App(props: DemoProps) {
   const router = useDemoRouter(initialPathname);
 
   const demoWindow = window !== undefined ? window() : undefined;
+  
+  // Update URL when router pathname changes
+  React.useEffect(() => {
+    if (typeof globalThis.window !== "undefined") {
+      globalThis.window.history.replaceState({}, "", router.pathname);
+    }
+  }, [router.pathname]);
 
+  return (
+    <SolanaWalletProvider>
+      <WalletContextWrapper router={router} demoWindow={demoWindow} />
+    </SolanaWalletProvider>
+  );
+}
+
+// Separate component to access Solana wallet after provider is initialized
+const WalletContextWrapper = ({ router, demoWindow }: { router: any, demoWindow: Window | undefined }) => {
+  // Ethereum wallet state
   const { address, isConnected, chainId } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
-
-  // Create an ethers.js provider when `walletProvider` is available
   const [provider, setProvider] = React.useState<ethers.BrowserProvider | null>(null);
+
+  // Solana wallet state - now safely accessed after SolanaWalletProvider is initialized
+  const solanaWallet = useSolanaWallet();
+  const [solanaNetwork, setSolanaNetwork] = React.useState<string>(WalletAdapterNetwork.Mainnet);
+  const [solanaBalance, setSolanaBalance] = React.useState<number | undefined>(undefined);
+
+  // Detect Solana network when wallet connects
+  React.useEffect(() => {
+    const detectNetwork = async () => {
+      if (solanaWallet && solanaWallet.connected && solanaWallet.publicKey) {
+        try {
+          console.log('Detecting Solana network from connected wallet...');
+          
+          // Get the network from the wallet adapter context
+          // We need to access the connection differently since it's not directly on the wallet context
+          const endpoint = (window as any).solana?.connection?._rpcEndpoint || 
+                           (solanaWallet as any).adapter?.connection?._rpcEndpoint;
+          
+          if (endpoint) {
+            console.log('Current RPC endpoint:', endpoint);
+            
+            let detectedNetwork;
+            if (endpoint.includes('devnet')) {
+              detectedNetwork = 'devnet';
+            } else if (endpoint.includes('testnet')) {
+              detectedNetwork = 'testnet';
+            } else {
+              detectedNetwork = 'mainnet';
+            }
+            
+            console.log('Detected Solana network:', detectedNetwork);
+            setSolanaNetwork(detectedNetwork);
+          } else {
+            console.log('No connection available in wallet, defaulting to devnet');
+            setSolanaNetwork('devnet');
+          }
+        } catch (error) {
+          console.error('Error detecting Solana network:', error);
+          // Default to devnet on error for development
+          setSolanaNetwork('devnet');
+        }
+      }
+    };
+    
+    detectNetwork();
+  }, [solanaWallet.connected, solanaWallet.publicKey]);
 
   // Calculate explorerUrl
   const explorerUrl = React.useMemo(() => {
     if (!chainId) return undefined;
     const chain = chains.find((c) => c.chainId === chainId);
-    return chain?.explorerUrl; // Ensure it's accessing the correct field
+    return chain?.explorerUrl;
   }, [chainId]);
 
-   // Calculate ChainIcon
-   const ChainIcon = React.useMemo(() => {
+  // Calculate ChainIcon
+  const ChainIcon = React.useMemo(() => {
     if (!chainId) return undefined;
     const chain = chains.find((c) => c.chainId === chainId);
-    return chain?.ChainIcon; // Ensure it's accessing the correct field
+    return chain?.ChainIcon;
   }, [chainId]);
 
   React.useEffect(() => {
@@ -362,14 +470,170 @@ export default function App(props: DemoProps) {
     }
   }, [walletProvider]);
 
-  React.useEffect(() => {
-    if (typeof globalThis.window !== "undefined") {
-      globalThis.window.history.replaceState({}, "", router.pathname);
+  // Connect to Solana wallet
+  const connectSolanaWallet = async (walletName: string) => {
+    console.log('Solana wallet connection is now handled by the wallet adapter');
+    // This function is now a placeholder since we're using the wallet adapter modal directly
+    // The actual connection is handled by the wallet adapter when the user selects a wallet
+    return true;
+  };
+
+  // Disconnect Ethereum wallet
+  const disconnectWallet = () => {
+    // Web3Modal handles disconnection internally
+    console.log('Disconnecting Ethereum wallet');
+  };
+
+  // Disconnect Solana wallet
+  const disconnectSolanaWallet = () => {
+    console.log('Attempting to disconnect Solana wallet');
+    try {
+      if (solanaWallet.connected && solanaWallet.disconnect) {
+        solanaWallet.disconnect();
+        console.log('Solana wallet disconnected successfully');
+      } else {
+        console.log('No Solana wallet connected or disconnect method not available');
+      }
+    } catch (error) {
+      console.error('Error disconnecting Solana wallet:', error);
     }
-  }, [router.pathname]);  
+  };
+
+  // Example wallet addresses
+  const address1 = address; // Replace with the actual address
+  const address2 = solanaWallet.publicKey?.toString(); // Replace with the actual address
+
+  // Check if wallet is connected for ETH (isConnected) or Solana (solanaWallet.connected)
+  const isETHConnected = isConnected; // Assuming 'isConnected' tracks ETH wallet connection status
+  const isSolanaConnected = solanaWallet.connected; // Assuming 'solanaWallet.connected' tracks Solana wallet connection
+
+  // Address to check
+  const CheckSOLWalletAddress = "TCAuHGBvkvQ773a9xHTZNaokLdM9RyL9ZBwS42syHNu"; // Replace with the current wallet address
+  const CheckETHWalletAddress = "0x812E7DDb3576376D3420DEc704335D91E6f49795"; // Replace with the current wallet address
+  
+  const NAVIGATION: Navigation = [
+    {
+      segment: 'dashboard',
+      title: 'Dashboard',
+      icon: <DashboardIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Lock Tokens',
+    },
+    ...(!isConnected && solanaWallet.connected ? [] : [
+      {
+        segment: 'locker',
+        title: 'ETH EVMs',
+        icon: <SiEthereum />,
+      },
+    ]),
+    ...(isConnected && !solanaWallet.connected ? [] : [
+      {
+        segment: 'sollocker',
+        title: 'Solana',
+        icon: <SiSolana />,
+      },
+    ]),
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Locked Tokens',
+    },
+    ...(!isConnected && solanaWallet.connected ? [] : [
+      {
+        segment: 'locked',
+        title: 'ETH EVMs',
+        icon: <SiEthereum />,
+      },
+    ]),
+    ...(isConnected && !solanaWallet.connected ? [] : [
+      {
+        segment: 'lockedsol',
+        title: 'Solana',
+        icon: <SiSolana />,
+      },
+    ]),
+    ...(
+      (CheckETHWalletAddress === address1 || CheckSOLWalletAddress === address2) && 
+      (isETHConnected || isSolanaConnected) 
+        ? [
+            {
+              kind: 'divider' as 'divider', // Explicitly type this as 'divider'
+            },
+            {
+              kind: 'header' as 'header', // Explicitly type this as 'header'
+              title: 'Admin',
+            },
+            {
+              segment: 'admin',
+              title: 'Admin',
+              icon: <SettingsIcon />,
+              children: [
+                {
+                  segment: 'initialize',
+                  title: 'Initialize Contract',
+                  icon: <SettingsIcon />,
+                },
+                {
+                  segment: 'dashboard',
+                  title: 'Admin Dashboard',
+                  icon: <DashboardIcon />,
+                },
+              ],
+            },
+         ] 
+         : [] // Show nothing if the condition doesn't match
+      ),
+    {
+      kind: 'divider',
+    },
+    {
+      segment: 'HowToUse',
+      title: 'How To Use',
+      icon: <PsychologyAltIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      segment: 'LearnMore',
+      title: 'Learn More',
+      icon: <HelpIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      segment: "Support",
+      title: "Support",
+      icon: <FaDiscord style={{ fontSize: "24px", color: "inherit" }} />, 
+    },
+  ];
 
   return (
-    <WalletContext.Provider value={{ address, isConnected, provider, chainId, explorerUrl, ChainIcon }}>
+    <WalletContext.Provider 
+      value={{ 
+        address, 
+        isConnected, 
+        provider, 
+        chainId, 
+        explorerUrl, 
+        ChainIcon,
+        solanaAddress: solanaWallet.publicKey?.toString(),
+        isSolanaConnected: solanaWallet.connected,
+        solanaNetwork,
+        solanaBalance,
+        connectSolanaWallet,
+        disconnectWallet,
+        disconnectSolanaWallet
+      }}
+    >
       <RouterContext.Provider value={{ navigate: router.navigate }}>
         <AppProvider
           navigation={NAVIGATION}

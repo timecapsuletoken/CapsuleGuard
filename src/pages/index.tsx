@@ -7,6 +7,7 @@ import {
   Container,
 } from '@mui/material';
 import { useContext } from "react";
+import { useWallet } from '@solana/wallet-adapter-react';
 import { RouterContext } from "../App";
 import ParticleAnimation from "../components/AnimatedBackground";
 
@@ -36,6 +37,7 @@ const HeroContent = styled(Container)(() => ({
 
 const CapsuleGuardHero: React.FC = () => {
   const { navigate } = useContext(RouterContext);
+  const { connected } = useWallet();
 
   return (
     <HeroContainer>
@@ -69,8 +71,8 @@ const CapsuleGuardHero: React.FC = () => {
             size="large"
             color="primary"
             startIcon={<HealthAndSafetyIcon />}
-            onClick={() => navigate("/locker")}
-            >
+            onClick={() => connected ? navigate("/sollocker") : navigate("/locker")}
+          >
             Get Started
           </Button>
           <Button

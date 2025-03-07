@@ -1,0 +1,959 @@
+{
+  "address": "CPmuun5rANNdQhsfHHm8xKQQuePjrTw37u9fzVbJZxTq",
+  "metadata": {
+    "name": "token_locker",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "extend_lock_time",
+      "discriminator": [
+        175,
+        19,
+        21,
+        28,
+        26,
+        14,
+        108,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "locker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lock_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  111,
+                  107,
+                  101,
+                  110,
+                  76,
+                  111,
+                  99,
+                  107,
+                  73,
+                  110,
+                  102,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "locker"
+              },
+              {
+                "kind": "account",
+                "path": "lock_account.token_mint",
+                "account": "TokenLockInfo"
+              },
+              {
+                "kind": "account",
+                "path": "lock_account.seed",
+                "account": "TokenLockInfo"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_unlock_time",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_config",
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  79,
+                  119,
+                  110,
+                  101,
+                  114,
+                  67,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "usdc_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "initialize_usdc_account",
+      "discriminator": [
+        103,
+        20,
+        54,
+        81,
+        255,
+        20,
+        113,
+        205
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  79,
+                  119,
+                  110,
+                  101,
+                  114,
+                  67,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "program_usdc_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "config"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "lock_native_tokens",
+      "discriminator": [
+        97,
+        53,
+        201,
+        3,
+        28,
+        12,
+        25,
+        249
+      ],
+      "accounts": [
+        {
+          "name": "locker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "usdc_account",
+          "writable": true
+        },
+        {
+          "name": "lock_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  111,
+                  107,
+                  101,
+                  110,
+                  76,
+                  111,
+                  99,
+                  107,
+                  73,
+                  110,
+                  102,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "locker"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "program_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "unlock_time",
+          "type": "u64"
+        },
+        {
+          "name": "seed",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "lock_tokens",
+      "discriminator": [
+        136,
+        11,
+        32,
+        232,
+        161,
+        117,
+        54,
+        211
+      ],
+      "accounts": [
+        {
+          "name": "locker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_account",
+          "writable": true
+        },
+        {
+          "name": "usdc_account",
+          "writable": true
+        },
+        {
+          "name": "lock_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  111,
+                  107,
+                  101,
+                  110,
+                  76,
+                  111,
+                  99,
+                  107,
+                  73,
+                  110,
+                  102,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "locker"
+              },
+              {
+                "kind": "account",
+                "path": "token_account.mint",
+                "account": "TokenAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lock_token_account",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "program_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "unlock_time",
+          "type": "u64"
+        },
+        {
+          "name": "seed",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_usdc_mint",
+      "discriminator": [
+        131,
+        156,
+        29,
+        130,
+        237,
+        52,
+        110,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  79,
+                  119,
+                  110,
+                  101,
+                  114,
+                  67,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_usdc_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_fees",
+      "discriminator": [
+        198,
+        212,
+        171,
+        109,
+        144,
+        215,
+        174,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  79,
+                  119,
+                  110,
+                  101,
+                  114,
+                  67,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "program_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "owner_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw_native_tokens",
+      "discriminator": [
+        122,
+        208,
+        11,
+        35,
+        0,
+        223,
+        125,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "locker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lock_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  111,
+                  107,
+                  101,
+                  110,
+                  76,
+                  111,
+                  99,
+                  107,
+                  73,
+                  110,
+                  102,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "locker"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lock_account.seed",
+                "account": "TokenLockInfo"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw_tokens",
+      "discriminator": [
+        2,
+        4,
+        225,
+        61,
+        19,
+        182,
+        106,
+        170
+      ],
+      "accounts": [
+        {
+          "name": "locker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lock_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  111,
+                  107,
+                  101,
+                  110,
+                  76,
+                  111,
+                  99,
+                  107,
+                  73,
+                  110,
+                  102,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "locker"
+              },
+              {
+                "kind": "account",
+                "path": "lock_account.token_mint",
+                "account": "TokenLockInfo"
+              },
+              {
+                "kind": "account",
+                "path": "lock_account.seed",
+                "account": "TokenLockInfo"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_account",
+          "writable": true
+        },
+        {
+          "name": "lock_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "OwnerConfig",
+      "discriminator": [
+        68,
+        140,
+        203,
+        32,
+        144,
+        130,
+        191,
+        23
+      ]
+    },
+    {
+      "name": "TokenLockInfo",
+      "discriminator": [
+        169,
+        155,
+        132,
+        240,
+        3,
+        21,
+        173,
+        54
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidUnlockTime",
+      "msg": "Unlock time must be in the future"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6002,
+      "name": "LockNotExpired",
+      "msg": "Lock period not yet ended"
+    },
+    {
+      "code": 6003,
+      "name": "UnauthorizedLocker",
+      "msg": "Only locker can withdraw"
+    },
+    {
+      "code": 6004,
+      "name": "NoTokensToWithdraw",
+      "msg": "No tokens to withdraw"
+    },
+    {
+      "code": 6005,
+      "name": "UnauthorizedOwner",
+      "msg": "Only owner can withdraw fees"
+    },
+    {
+      "code": 6006,
+      "name": "NoFeesToWithdraw",
+      "msg": "No fees to withdraw"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidUsdcMint",
+      "msg": "Invalid USDC mint"
+    },
+    {
+      "code": 6008,
+      "name": "OnlyLockerCanExtend",
+      "msg": "Only locker can extend"
+    },
+    {
+      "code": 6009,
+      "name": "NewUnlockTimeMustBeGreater",
+      "msg": "New unlock time must be greater"
+    },
+    {
+      "code": 6010,
+      "name": "NewUnlockTimeMustBeInFuture",
+      "msg": "New unlock time must be in future"
+    },
+    {
+      "code": 6011,
+      "name": "OnlyOwnerCanUpdate",
+      "msg": "Only owner can update"
+    }
+  ],
+  "types": [
+    {
+      "name": "OwnerConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "collected_fees",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenLockInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "locker",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "locked_amount",
+            "type": "u64"
+          },
+          {
+            "name": "unlock_time",
+            "type": "u64"
+          },
+          {
+            "name": "creation_time",
+            "type": "u64"
+          },
+          {
+            "name": "seed",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

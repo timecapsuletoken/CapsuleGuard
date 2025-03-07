@@ -19,6 +19,7 @@ import {
 
 import { useContext } from "react";
 import { RouterContext } from "../App";
+import WalletConnectButton from '../components/WalletConnectButton';
 import { useTheme } from "@mui/material/styles";
 
 import Slider from 'react-infinite-logo-slider';
@@ -441,7 +442,7 @@ const LearnMore: React.FC = () => {
                 Get Started Now
               </button>
               <Divider orientation="vertical" flexItem />
-              <w3m-button />
+              <WalletConnectButton />
               <Divider orientation="vertical" flexItem />
               <button
                 style={{

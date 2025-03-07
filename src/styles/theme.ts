@@ -19,7 +19,7 @@ export const Theme = createTheme({
         primary: {
           main: "#9e03f2",
           light: "#c773f5",
-          dark: "#5f0191",
+          dark: "#aa1ff4",
           contrastText: "#ffffff",
         },
         secondary: {
@@ -50,7 +50,7 @@ export const Theme = createTheme({
         primary: {
           main: "#1ec8d8",
           light: "rgb(191, 250, 255)",
-          dark: "rgb(18, 101, 109)",
+          dark: "rgb(7 230 245)",
           contrastText: "#fff",
         },
         secondary: {
@@ -60,7 +60,7 @@ export const Theme = createTheme({
           contrastText: "#1c1c1c",
         },
         action: {
-          hover: '#f5f5f5',
+          hover:'rgb(105, 105, 105)',
         }, 
         text: {
           primary: "#ffffff",

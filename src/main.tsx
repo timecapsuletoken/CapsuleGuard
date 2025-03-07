@@ -1,12 +1,24 @@
+import './polyfills'; // Import polyfills first
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { NotificationsProvider } from '@toolpad/core/useNotifications';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <NotificationsProvider>
-      <App />
-    </NotificationsProvider>
+    <App />
+    <ToastContainer 
+      position="bottom-left"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="dark"
+    />
   </React.StrictMode>
 );
